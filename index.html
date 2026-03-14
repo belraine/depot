@@ -1,0 +1,2784 @@
+<!DOCTYPE html>
+<html lang="fr-CH">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+    <title>Scanning Equipment Tool V9.5</title>
+    <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+    <style>
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono&display=swap');
+    :root {
+        --bg:      #f2f4f7;
+        --card:    #ffffff;
+        --border:  #e2e8f0;
+        --accent:  #2563eb;
+        --success: #059669;
+        --warning: #d97706;
+        --danger:  #dc2626;
+        --text:    #1e293b;
+        --muted:   #64748b;
+        --muted2:  #94a3b8;
+    }
+    * { box-sizing:border-box; margin:0; padding:0; -webkit-tap-highlight-color:transparent; }
+    body { font-family:'Inter',sans-serif; background:var(--bg); color:var(--text); min-height:100vh; padding-bottom:20px; }
+
+    /* HEADER */
+    .app-header { background:#fff; border-bottom:1px solid var(--border); padding:0 16px; height:54px; display:flex; align-items:center; justify-content:space-between; position:sticky; top:0; z-index:100; box-shadow:0 1px 4px rgba(0,0,0,.06); }
+    .app-title { font-size:.9rem; font-weight:700; color:var(--text); display:flex; align-items:center; gap:9px; }
+    .app-title-icon { width:30px; height:30px; background:var(--accent); border-radius:8px; display:flex; align-items:center; justify-content:center; font-size:.9rem; }
+    .app-version { font-family:'JetBrains Mono',monospace; font-size:.6rem; background:#eff6ff; color:var(--accent); padding:3px 8px; border-radius:20px; }
+
+    /* CONTENU */
+    .tabs { display:none; }
+    .content { display:none; padding:16px; max-width:680px; margin:auto; }
+    .content.active { display:block; animation:fadeIn .2s ease; }
+    @keyframes fadeIn { from{opacity:0;transform:translateY(8px)} to{opacity:1;transform:translateY(0)} }
+
+    /* BOUTON RETOUR */
+    .btn-back { width:44px; height:44px; background:#fff; border:1.5px solid var(--border); border-radius:50%; cursor:pointer; display:inline-flex; align-items:center; justify-content:center; font-size:1.25rem; color:var(--accent); padding:0; font-family:'Inter',sans-serif; margin-bottom:14px; box-shadow:0 1px 4px rgba(0,0,0,.08); transition:all .18s; flex-shrink:0; }
+    .btn-back:hover { background:var(--accent); color:#fff; border-color:var(--accent); box-shadow:0 3px 10px rgba(37,99,235,.25); }
+    .btn-back:active { transform:scale(.93); }
+
+    /* CARDS */
+    .card { background:#fff; border:1px solid var(--border); border-radius:14px; padding:18px; margin-bottom:12px; box-shadow:0 1px 3px rgba(0,0,0,.05); }
+    .section-title { font-size:.65rem; font-weight:700; text-transform:uppercase; letter-spacing:1px; color:var(--muted); margin-bottom:14px; padding-bottom:10px; border-bottom:1px solid var(--border); display:flex; align-items:center; gap:8px; }
+    .section-title::before { content:''; width:3px; height:13px; background:var(--accent); border-radius:2px; flex-shrink:0; }
+
+    /* FORMULAIRE */
+    .field { margin-bottom:13px; }
+    label { display:block; font-size:.7rem; font-weight:500; color:var(--muted); margin-bottom:5px; }
+    .req { color:var(--danger); }
+    input, select { width:100%; padding:10px 13px; border:1.5px solid var(--border); border-radius:9px; font-size:.88rem; font-family:'Inter',sans-serif; color:var(--text); background:#fff; transition:border-color .18s,box-shadow .18s; outline:none; -webkit-appearance:none; }
+    input:focus, select:focus { border-color:var(--accent); box-shadow:0 0 0 3px rgba(37,99,235,.1); }
+    input::placeholder { color:var(--muted2); }
+    input[readonly] { background:var(--bg); color:var(--muted); cursor:default; }
+    input[readonly]:focus { border-color:var(--border); box-shadow:none; }
+    select option { background:#fff; color:var(--text); }
+    .sn-input { border-color:var(--warning)!important; background:#fffbeb!important; }
+    .field-row { display:grid; gap:10px; }
+    .field-row-2 { grid-template-columns:1fr 1fr; }
+    .field-row-3 { grid-template-columns:1fr 1fr 1fr; }
+
+    /* BOUTONS */
+    .btn-row { display:flex; gap:10px; margin-top:20px; }
+    .btn-cancel { flex:1; background:#f1f5f9; color:var(--muted); border:1.5px solid var(--border); border-radius:9px; padding:11px 16px; font-size:.875rem; font-weight:600; font-family:'Inter',sans-serif; cursor:pointer; transition:all .18s; display:inline-flex; align-items:center; justify-content:center; gap:6px; }
+    .btn-cancel:hover { background:#e2e8f0; color:var(--text); }
+    .btn-cancel:active { transform:scale(.97); }
+    .btn-primary { flex:2; background:var(--accent); color:#fff; border:none; border-radius:9px; padding:11px 20px; font-size:.875rem; font-weight:600; font-family:'Inter',sans-serif; cursor:pointer; transition:all .18s; display:inline-flex; align-items:center; justify-content:center; gap:7px; }
+    .btn-primary:hover { background:#1d4ed8cc; }
+    .btn-primary:active { transform:scale(.97); }
+    .btn-primary:hover { background:#1d4ed8; }
+    .btn-primary:active { transform:scale(.97); }
+    .btn-secondary { background:#fff; color:var(--accent); border:1.5px solid var(--accent); border-radius:9px; padding:10px 18px; font-size:.875rem; font-weight:600; font-family:'Inter',sans-serif; cursor:pointer; transition:all .18s; display:inline-flex; align-items:center; justify-content:center; gap:7px; }
+    .btn-secondary:hover { background:#eff6ff; }
+    .btn-danger { background:#fff; color:var(--danger); border:1.5px solid var(--danger); border-radius:9px; padding:10px 18px; font-size:.875rem; font-weight:600; font-family:'Inter',sans-serif; cursor:pointer; transition:all .18s; display:inline-flex; align-items:center; justify-content:center; gap:7px; }
+    .btn-danger:hover { background:#fef2f2; }
+    .btn-green { background:#fff; color:var(--success); border:1.5px solid var(--success); border-radius:9px; padding:10px 18px; font-size:.875rem; font-weight:600; font-family:'Inter',sans-serif; cursor:pointer; transition:all .18s; display:inline-flex; align-items:center; justify-content:center; gap:7px; }
+    .btn-green:hover { background:#f0fdf4; }
+    .btn-warning { background:#fff; color:var(--warning); border:1.5px solid var(--warning); border-radius:9px; padding:10px 18px; font-size:.875rem; font-weight:600; font-family:'Inter',sans-serif; cursor:pointer; transition:all .18s; display:inline-flex; align-items:center; justify-content:center; gap:7px; }
+    .btn-warning:hover { background:#fffbeb; }
+
+    /* BADGES */
+    .badge { display:inline-flex; align-items:center; gap:4px; padding:3px 9px; border-radius:12px; font-size:.7rem; font-weight:500; }
+    .badge-blue   { background:#eff6ff; color:var(--accent); }
+    .badge-green  { background:#f0fdf4; color:var(--success); }
+    .badge-red    { background:#fef2f2; color:var(--danger); }
+    .badge-orange { background:#fffbeb; color:var(--warning); }
+    .badge-gray   { background:var(--bg); color:var(--muted); }
+
+    /* KPI */
+    .kpi-grid { display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-bottom:12px; }
+    .kpi-card { background:#fff; border:1px solid var(--border); border-radius:14px; padding:16px; border-left:3px solid; box-shadow:0 1px 3px rgba(0,0,0,.05); }
+    .kpi-card.blue   { border-left-color:var(--accent); }
+    .kpi-card.green  { border-left-color:var(--success); }
+    .kpi-card.orange { border-left-color:var(--warning); }
+    .kpi-card.red    { border-left-color:var(--danger); }
+    .kpi-icon  { font-size:1.3rem; margin-bottom:8px; }
+    .kpi-val   { font-size:1.4rem; font-weight:700; color:var(--text); line-height:1; }
+    .kpi-label { font-size:.68rem; color:var(--muted); margin-top:4px; }
+
+    /* HISTORIQUE */
+    .hist-filters { display:flex; gap:8px; margin-bottom:12px; flex-wrap:wrap; }
+    .hist-filters input, .hist-filters select { flex:1; min-width:120px; padding:9px 12px; font-size:.82rem; }
+    .hist-item { background:#fff; border:1px solid var(--border); border-radius:11px; padding:12px 14px; margin-bottom:8px; display:flex; align-items:center; gap:12px; box-shadow:0 1px 3px rgba(0,0,0,.04); transition:box-shadow .18s; }
+    .hist-item:hover { box-shadow:0 3px 10px rgba(0,0,0,.08); }
+    .hist-avatar { width:40px; height:40px; background:#eff6ff; border-radius:10px; display:flex; align-items:center; justify-content:center; font-size:1.1rem; flex-shrink:0; }
+    .hist-info { flex:1; min-width:0; }
+    .hist-name { font-weight:600; font-size:.88rem; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; color:var(--text); }
+    .hist-sub  { font-size:.73rem; color:var(--muted); margin-top:2px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+    .hist-actions { display:flex; gap:6px; flex-shrink:0; }
+    .hist-btn { width:32px; height:32px; border-radius:8px; border:1px solid var(--border); background:#fff; cursor:pointer; display:flex; align-items:center; justify-content:center; font-size:.85rem; transition:all .15s; }
+    .hist-btn:hover { border-color:var(--accent); background:#eff6ff; }
+    .hist-btn.del:hover { border-color:var(--danger); background:#fef2f2; }
+
+    /* GARANTIE */
+    .gar-search { display:flex; gap:8px; margin-bottom:16px; }
+    .gar-search input { flex:1; }
+    .gar-card { background:#fff; border:1px solid var(--border); border-radius:14px; padding:18px; margin-bottom:10px; box-shadow:0 1px 3px rgba(0,0,0,.05); }
+    .gar-header { display:flex; align-items:flex-start; justify-content:space-between; margin-bottom:14px; gap:10px; }
+    .gar-name { font-weight:700; font-size:1rem; color:var(--text); }
+    .gar-product { font-size:.78rem; color:var(--muted); margin-top:3px; }
+    .gar-row { display:flex; justify-content:space-between; align-items:center; padding:8px 0; border-bottom:1px solid var(--border); font-size:.82rem; }
+    .gar-row:last-child { border-bottom:none; }
+    .gar-row-label { color:var(--muted); }
+    .gar-row-val { font-weight:600; color:var(--text); }
+    .gar-progress { height:6px; background:var(--border); border-radius:3px; overflow:hidden; margin-top:14px; }
+    .gar-progress-bar { height:100%; border-radius:3px; transition:width .5s ease; }
+
+    /* BACKUP */
+    .backup-grid { display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-bottom:12px; }
+    .backup-btn-card { background:#fff; border:1px solid var(--border); border-radius:14px; padding:18px 12px; text-align:center; cursor:pointer; transition:all .18s; display:flex; flex-direction:column; align-items:center; gap:8px; box-shadow:0 1px 3px rgba(0,0,0,.05); }
+    .backup-btn-card:hover { border-color:var(--accent); box-shadow:0 3px 10px rgba(0,0,0,.08); }
+    .backup-btn-card .bicon { font-size:1.7rem; }
+    .backup-btn-card .blabel { font-size:.78rem; font-weight:600; color:var(--text); }
+    .backup-btn-card .bsub { font-size:.67rem; color:var(--muted); }
+
+    /* TOAST */
+    .toast { position:fixed; bottom:30px; left:50%; transform:translateX(-50%) translateY(10px); background:var(--text); color:#fff; padding:10px 18px; border-radius:9px; font-size:.84rem; font-weight:500; z-index:9999; opacity:0; transition:all .25s ease; white-space:nowrap; box-shadow:0 4px 16px rgba(0,0,0,.15); max-width:90vw; }
+    .toast.show { opacity:1; transform:translateX(-50%) translateY(0); }
+    .toast.success { background:var(--success); }
+    .toast.error   { background:var(--danger); }
+
+    /* MODAL */
+    .modal-overlay { display:none; position:fixed; inset:0; background:rgba(0,0,0,.4); z-index:1000; align-items:flex-end; justify-content:center; }
+    .modal-overlay.open { display:flex; }
+    .modal-sheet { background:#fff; border-radius:20px 20px 0 0; padding:20px 20px 40px; width:100%; max-width:500px; animation:slideUp .25s ease; box-shadow:0 -4px 20px rgba(0,0,0,.1); }
+    @keyframes slideUp { from{transform:translateY(100%)} to{transform:translateY(0)} }
+    .modal-handle { width:36px; height:4px; background:var(--border); border-radius:2px; margin:0 auto 18px; }
+    .modal-title { font-size:.95rem; font-weight:700; margin-bottom:14px; text-align:center; color:var(--text); }
+
+    /* CHART */
+    .bar-chart { display:flex; gap:6px; align-items:flex-end; height:110px; padding:0 4px; }
+    .bar-item { flex:1; display:flex; flex-direction:column; align-items:center; gap:4px; }
+    .bar-fill { width:100%; border-radius:5px 5px 0 0; background:var(--accent); transition:height .5s ease; min-height:3px; opacity:.8; }
+    .bar-label { font-size:.55rem; color:var(--muted); text-align:center; font-weight:500; }
+    .bar-val { font-size:.6rem; color:var(--accent); font-weight:600; }
+
+    /* EDIT BANNER */
+    .edit-banner { background:#fffbeb; border:1px solid rgba(217,119,6,.3); border-radius:9px; padding:10px 14px; margin-bottom:14px; font-size:.82rem; color:var(--warning); display:none; align-items:center; gap:8px; }
+    .edit-banner.visible { display:flex; }
+
+    /* DATE */
+    .date-display { display:flex; align-items:center; padding:10px 13px; font-size:.88rem; font-family:'Inter',sans-serif; color:var(--text); background:#fff; border:1.5px solid var(--border); border-radius:9px; min-height:42px; }
+
+    /* MISC */
+    .divider { height:1px; background:var(--border); margin:14px 0; }
+    .text-muted { color:var(--muted); font-size:.82rem; }
+    .text-small { font-size:.78rem; color:var(--muted); line-height:1.5; }
+    .empty-state { text-align:center; padding:40px 20px; color:var(--muted); }
+    .empty-state .empty-icon { font-size:2.5rem; margin-bottom:10px; opacity:.4; }
+    .empty-state p { font-size:.85rem; }
+    .solde-positif { color:var(--danger); font-weight:600; }
+    .solde-zero    { color:var(--success); font-weight:600; }
+    .retard { background:#fef2f2!important; border-color:rgba(220,38,38,.2)!important; }
+
+    /* ══ PAGE ACCUEIL ══ */
+    .home-wrap { padding:20px 16px; max-width:680px; margin:auto; }
+    .home-label { font-size:.65rem; font-weight:700; text-transform:uppercase; letter-spacing:1px; color:var(--muted); margin-bottom:12px; }
+    .home-grid { display:grid; grid-template-columns:1fr 1fr 1fr; gap:11px; margin-bottom:20px; }
+    .home-tile { background:#fff; border-radius:16px; padding:20px 8px 14px; display:flex; flex-direction:column; align-items:center; gap:9px; cursor:pointer; box-shadow:0 1px 4px rgba(0,0,0,.07),0 2px 8px rgba(0,0,0,.04); border:1px solid rgba(0,0,0,.05); transition:transform .15s,box-shadow .15s; min-height:100px; }
+    .home-tile:active { transform:scale(.93); }
+    .home-tile:hover { box-shadow:0 4px 16px rgba(0,0,0,.1); transform:translateY(-2px); }
+    .home-tile-icon { width:50px; height:50px; border-radius:14px; display:flex; align-items:center; justify-content:center; font-size:1.4rem; }
+    .home-tile-label { font-size:.72rem; font-weight:600; color:var(--text); text-align:center; line-height:1.3; }
+    .tile-blue   { background:#dbeafe; }
+    .tile-teal   { background:#ccfbf1; }
+    .tile-purple { background:#ede9fe; }
+    .tile-orange { background:#ffedd5; }
+    .tile-green  { background:#dcfce7; }
+    .tile-pink   { background:#fce7f3; }
+    .home-stats { display:grid; grid-template-columns:1fr 1fr 1fr; gap:10px; }
+    .home-stat { background:#fff; border-radius:12px; padding:14px 10px; text-align:center; box-shadow:0 1px 3px rgba(0,0,0,.05); border:1px solid var(--border); }
+    .home-stat-val { font-size:1.5rem; font-weight:700; color:var(--text); }
+    .home-stat-label { font-size:.62rem; color:var(--muted); margin-top:3px; font-weight:500; }
+
+
+
+    /* STATS BAR & SEARCH */
+    .stats-bar { display:grid; grid-template-columns:1fr 1fr 1fr; gap:8px; margin-bottom:14px; }
+    .stat-box { background:#fff; border:1px solid var(--border); border-radius:11px; padding:12px 10px; text-align:center; box-shadow:0 1px 3px rgba(0,0,0,.04); }
+    .stat-num { font-size:1.3rem; font-weight:700; color:var(--text); line-height:1; }
+    .stat-icon { font-size:1.1rem; margin-bottom:4px; }
+    .stat-lbl { font-size:.62rem; color:var(--muted); margin-top:3px; font-weight:500; }
+    .search-wrap { position:relative; margin-bottom:10px; }
+    .search-icon { position:absolute; left:11px; top:50%; transform:translateY(-50%); font-size:.9rem; pointer-events:none; }
+    .search-wrap input { padding-left:34px; }
+
+    /* HISTORIQUE CARTES */
+    .hist-card { background:#fff; border:1px solid var(--border); border-radius:13px; padding:14px; margin-bottom:10px; box-shadow:0 1px 3px rgba(0,0,0,.05); }
+    .hist-card-top { display:flex; align-items:center; gap:11px; margin-bottom:10px; }
+    .hist-card-avatar { width:42px; height:42px; background:#eff6ff; border-radius:11px; display:flex; align-items:center; justify-content:center; font-size:1.2rem; flex-shrink:0; }
+    .hist-card-info { flex:1; min-width:0; }
+    .hist-card-name { font-weight:700; font-size:.9rem; color:var(--text); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+    .hist-card-sub  { font-size:.72rem; color:var(--muted); margin-top:2px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+    .hist-card-actions { display:flex; gap:6px; flex-shrink:0; }
+    .hist-card-bottom { display:flex; align-items:center; gap:10px; flex-wrap:wrap; padding-top:10px; border-top:1px solid var(--border); }
+
+    ::-webkit-scrollbar { width:4px; }
+    ::-webkit-scrollbar-track { background:transparent; }
+    ::-webkit-scrollbar-thumb { background:var(--border); border-radius:2px; }
+
+    /* ── LOCK SCREEN ───────────────────────────── */
+    #lockScreen { position:fixed; inset:0; background:linear-gradient(135deg,#1e293b 0%,#1d4ed8 100%); z-index:9999; display:flex; flex-direction:column; align-items:center; justify-content:center; padding:24px; }
+    #lockScreen.hidden { display:none; }
+    .lock-logo { font-size:2.5rem; margin-bottom:8px; }
+    .lock-title { font-size:1.1rem; font-weight:700; color:#fff; margin-bottom:4px; font-family:'Inter',sans-serif; }
+    .lock-subtitle { font-size:.78rem; color:rgba(255,255,255,.6); margin-bottom:32px; font-family:'Inter',sans-serif; }
+    .lock-dots { display:flex; gap:14px; margin-bottom:28px; }
+    .lock-dot { width:14px; height:14px; border-radius:50%; background:rgba(255,255,255,.25); border:2px solid rgba(255,255,255,.4); transition:all .2s; }
+    .lock-dot.filled { background:#fff; border-color:#fff; transform:scale(1.1); }
+    .lock-dot.error { background:#ef4444; border-color:#ef4444; }
+    .lock-dot.ok { background:#22c55e; border-color:#22c55e; }
+    .lock-keypad { display:grid; grid-template-columns:repeat(3,1fr); gap:12px; max-width:280px; width:100%; }
+    .lock-key { background:rgba(255,255,255,.12); border:none; border-radius:16px; padding:18px 0; font-size:1.4rem; font-weight:600; color:#fff; cursor:pointer; font-family:'Inter',sans-serif; transition:all .15s; backdrop-filter:blur(4px); }
+    .lock-key:active { background:rgba(255,255,255,.3); transform:scale(.93); }
+    .lock-key.del { font-size:1.1rem; }
+    .lock-msg { margin-top:16px; font-size:.8rem; color:rgba(255,255,255,.5); font-family:'Inter',sans-serif; min-height:20px; text-align:center; }
+    .lock-setup-hint { margin-top:24px; font-size:.75rem; color:rgba(255,255,255,.45); font-family:'Inter',sans-serif; text-align:center; }
+    @keyframes shakeX { 0%,100%{transform:translateX(0)} 20%,60%{transform:translateX(-8px)} 40%,80%{transform:translateX(8px)} }
+    .shake { animation:shakeX .4s ease; }
+
+    
+    /* ═══ LOCK SCREEN ════════════════════════════════════ */
+    #lockScreen {
+        position:fixed; inset:0; z-index:9999;
+        background:linear-gradient(150deg,#0f172a 0%,#1e3a8a 55%,#2563eb 100%);
+        display:flex; flex-direction:column; align-items:center;
+        justify-content:center; padding:20px; overflow-y:auto;
+    }
+    #lockScreen.hidden { display:none; }
+    .lk-logo    { font-size:2.8rem; margin-bottom:8px; }
+    .lk-appname { font-size:1rem; font-weight:700; color:#fff;
+                  font-family:'Inter',sans-serif; margin-bottom:3px; }
+    .lk-version { font-size:.65rem; color:rgba(255,255,255,.45);
+                  font-family:'JetBrains Mono',monospace;
+                  letter-spacing:.1em; margin-bottom:22px; }
+    .lk-sub     { font-size:.82rem; color:rgba(255,255,255,.65);
+                  font-family:'Inter',sans-serif; min-height:20px;
+                  margin-bottom:24px; text-align:center; }
+    .lk-dots    { display:flex; gap:16px; margin-bottom:24px; }
+    .lk-dot     { width:15px; height:15px; border-radius:50%;
+                  background:rgba(255,255,255,.2);
+                  border:2px solid rgba(255,255,255,.35); transition:all .18s; }
+    .lk-dot.filled { background:#fff; border-color:#fff; transform:scale(1.15); }
+    .lk-dot.error  { background:#f87171; border-color:#f87171; }
+    .lk-dot.ok     { background:#4ade80; border-color:#4ade80; }
+    .lk-pad     { display:grid; grid-template-columns:repeat(3,1fr);
+                  gap:10px; max-width:264px; width:100%; }
+    .lk-key     { background:rgba(255,255,255,.1);
+                  border:1px solid rgba(255,255,255,.15); border-radius:14px;
+                  padding:17px 0; font-size:1.35rem; font-weight:600;
+                  color:#fff; cursor:pointer; font-family:'Inter',sans-serif;
+                  transition:all .12s; }
+    .lk-key:active { background:rgba(255,255,255,.28); transform:scale(.91); }
+    .lk-del     { font-size:1.05rem; }
+    .lk-msg     { margin-top:14px; min-height:20px; font-size:.8rem;
+                  color:rgba(255,255,255,.6); font-family:'Inter',sans-serif;
+                  text-align:center; }
+    @keyframes shakeX {
+        0%,100%{transform:translateX(0)}
+        20%,60%{transform:translateX(-7px)}
+        40%,80%{transform:translateX(7px)}
+    }
+    .shake { animation:shakeX .35s ease; }
+    .lk-forgot  { background:none; border:none; color:rgba(255,255,255,.4);
+                  font-size:.75rem; font-family:'Inter',sans-serif;
+                  cursor:pointer; margin-top:18px; padding:6px 12px;
+                  border-radius:20px; transition:all .2s; }
+    .lk-forgot:hover { color:rgba(255,255,255,.75);
+                       background:rgba(255,255,255,.08); }
+    .lk-panel   { width:100%; max-width:288px;
+                  background:rgba(10,18,40,.65);
+                  border:1px solid rgba(255,255,255,.14);
+                  border-radius:18px; padding:18px; margin-top:8px;
+                  backdrop-filter:blur(12px); }
+    .lk-panel-title   { font-size:.9rem; font-weight:700; color:#fff;
+                        margin-bottom:8px; font-family:'Inter',sans-serif; }
+    .lk-panel-contact { font-size:.75rem; color:#7dd3fc; margin-bottom:6px;
+                        font-family:'Inter',sans-serif; line-height:1.5; }
+    .lk-panel-code    { background:rgba(0,0,0,.45); color:#38bdf8;
+                        font-family:'JetBrains Mono',monospace;
+                        font-size:1.45rem; font-weight:700;
+                        letter-spacing:.18em; text-align:center;
+                        padding:12px; border-radius:10px; margin-bottom:8px;
+                        border:1px solid rgba(56,189,248,.25); }
+    .lk-panel-hint    { font-size:.68rem; color:rgba(255,255,255,.35);
+                        text-align:center; margin-bottom:10px;
+                        font-family:'Inter',sans-serif; }
+    .lk-panel-input   { width:100%; box-sizing:border-box;
+                        background:rgba(255,255,255,.1);
+                        border:1.5px solid rgba(255,255,255,.25);
+                        border-radius:10px; padding:10px;
+                        font-size:1rem; font-family:'JetBrains Mono',monospace;
+                        color:#fff; letter-spacing:.12em; text-align:center;
+                        margin-bottom:10px; outline:none; }
+    .lk-panel-input::placeholder { color:rgba(255,255,255,.3);
+                                   font-size:.82rem; letter-spacing:.04em; }
+    .lk-panel-input:focus { border-color:rgba(255,255,255,.55); }
+    .lk-panel-btn     { width:100%;
+                        background:linear-gradient(135deg,#3b82f6,#2563eb);
+                        color:#fff; border:none; border-radius:10px;
+                        padding:11px; font-size:.875rem; font-weight:700;
+                        font-family:'Inter',sans-serif; cursor:pointer; }
+    .lk-panel-btn:active { transform:scale(.97); }
+    .lk-panel-msg     { font-size:.75rem; text-align:center;
+                        min-height:18px; margin-top:8px;
+                        font-family:'Inter',sans-serif; }
+    .lk-panel-manual  { font-size:.62rem; color:rgba(255,255,255,.27);
+                        line-height:1.4; margin-top:12px;
+                        border-top:1px solid rgba(255,255,255,.1);
+                        padding-top:10px; font-family:'Inter',sans-serif; }
+    .hdr-lock-btn { background:rgba(37,99,235,.1);
+                    border:1px solid rgba(37,99,235,.25);
+                    border-radius:8px; padding:5px 9px; font-size:.9rem;
+                    cursor:pointer; color:var(--accent); transition:all .18s; }
+    .hdr-lock-btn:hover { background:rgba(37,99,235,.2); }
+
+    /* ═══ SECTION SECURITE ═══════════════════════════════ */
+    .sec-code-box { background:#1e293b; color:#38bdf8;
+                    font-family:'JetBrains Mono',monospace;
+                    font-size:1.5rem; font-weight:700; letter-spacing:.2em;
+                    text-align:center; padding:14px; border-radius:12px; }
+
+
+    /* ── TOGGLE SWITCH ─────────────────────────────────── */
+    .sec-toggle {
+        width: 58px; height: 32px; border-radius: 16px;
+        background: #d1d5db; /* gris = OFF */
+        position: relative; cursor: pointer;
+        transition: background .28s ease;
+        flex-shrink: 0;
+        box-shadow: inset 0 1px 4px rgba(0,0,0,.12);
+    }
+    .sec-toggle.on {
+        background: #22c55e; /* vert = ON */
+    }
+    .sec-toggle-knob {
+        position: absolute; top: 3px; left: 3px;
+        width: 26px; height: 26px; border-radius: 50%;
+        background: #fff;
+        box-shadow: 0 2px 6px rgba(0,0,0,.22);
+        transition: transform .28s ease;
+        display: flex; align-items: center; justify-content: center;
+        font-size: 13px;
+    }
+    .sec-toggle.on .sec-toggle-knob {
+        transform: translateX(26px);
+    }
+
+    </style>
+    <script>
+// ════════════════════════════════════════
+// SCANNER V4.2.4 — Photo capture natif iOS/Android
+// ════════════════════════════════════════
+
+async function traiterPhotoScan(event) {
+    const file = event.target.files[0];
+    if(!file) return;
+
+    showToast('Analyse en cours...', '');
+
+    try {
+        const base64 = await new Promise((resolve, reject) => {
+            const reader = new FileReader();
+            reader.onload  = () => resolve(reader.result.split(',')[1]);
+            reader.onerror = reject;
+            reader.readAsDataURL(file);
+        });
+
+        const mediaType = file.type || 'image/jpeg';
+
+        const response = await fetch('https://api.anthropic.com/v1/messages', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                model: 'claude-sonnet-4-20250514',
+                max_tokens: 300,
+                messages: [{
+                    role: 'user',
+                    content: [
+                        { type: 'image', source: { type: 'base64', media_type: mediaType, data: base64 } },
+                        { type: 'text', text: 'Lis cette etiquette produit et extrais UNIQUEMENT ces informations en JSON strict (sans markdown) : {"sn":"","modele":"","marque":"","type":""}. Le champ type doit etre: TV, PC, Imprimante, Telephone, Tablette ou Autre. Si une info est absente mets "". Lis bien tous les codes barres, QR codes et textes visibles.' }
+                    ]
+                }]
+            })
+        });
+
+        const data = await response.json();
+
+        if(data.content && data.content[0] && data.content[0].text) {
+            const raw = data.content[0].text.trim();
+            try {
+                const clean = raw.replace(/```json|```/g, '').trim();
+                const infos = JSON.parse(clean);
+                appliquerInfosScan(infos);
+            } catch(e) {
+                const infos = parserTexteLibreScan(raw);
+                appliquerInfosScan(infos);
+            }
+        } else if(data.error) {
+            throw new Error(data.error.message || 'Erreur API');
+        }
+
+    } catch(err) {
+        console.error('Scan:', err);
+        showToast('Erreur analyse — ' + err.message, 'error');
+    }
+
+    document.getElementById('scanner-input').value = '';
+}
+
+function parserTexteLibreScan(text) {
+    const infos = { sn: '', modele: '', marque: '', type: '' };
+    const snM  = text.match(/S[\/]?N[:\s]+([A-Z0-9]{6,})/i);
+    const modM = text.match(/mod[eè]le?[:\s]+([A-Z0-9]{5,})/i);
+    if(snM)  infos.sn     = snM[1];
+    if(modM) infos.modele = modM[1];
+    if(!infos.sn) infos.sn = text.trim();
+    return infos;
+}
+
+function appliquerInfosScan(infos) {
+    if(!infos) return;
+    if(infos.sn)     document.getElementById('p_sn').value     = infos.sn;
+    if(infos.modele) document.getElementById('p_mod').value    = infos.modele;
+    if(infos.marque) document.getElementById('p_marque').value = infos.marque;
+    if(infos.type && infos.type !== 'Autre') {
+        const typeMap = { TV:'TV', PC:'PC', Imprimante:'Imprimante', Telephone:'Telephone', Tablette:'Tablette' };
+        if(typeMap[infos.type]) {
+            document.getElementById('p_type').value = typeMap[infos.type];
+            updateCategories();
+        }
+    }
+    if(navigator.vibrate) navigator.vibrate([100, 50, 100]);
+    const resume = [
+        infos.marque ? infos.marque : '',
+        infos.modele ? infos.modele : '',
+        infos.sn     ? infos.sn     : ''
+    ].filter(Boolean).join(' | ');
+    showToast('Scan OK : ' + (resume || 'Info extraite'), 'success');
+}
+</script>
+    <script src="https://unpkg.com/@zxing/library@0.19.1/umd/index.min.js"></script>
+    <!-- Firebase -->
+</head>
+<body>
+<!-- LOCK SCREEN -->
+<div id="lockScreen" class="hidden">
+
+    <div class="lk-logo">🔒</div>
+    <div class="lk-appname">Scanning Equipment Tool</div>
+    <div class="lk-version">Lock Screen Tool  V1.0</div>
+    <div class="lk-sub" id="lkSub"></div>
+
+    <div class="lk-dots" id="lkDots">
+        <div class="lk-dot" id="pd0"></div>
+        <div class="lk-dot" id="pd1"></div>
+        <div class="lk-dot" id="pd2"></div>
+        <div class="lk-dot" id="pd3"></div>
+    </div>
+
+    <div class="lk-pad">
+        <button class="lk-key" onclick="pinKey('1')">1</button>
+        <button class="lk-key" onclick="pinKey('2')">2</button>
+        <button class="lk-key" onclick="pinKey('3')">3</button>
+        <button class="lk-key" onclick="pinKey('4')">4</button>
+        <button class="lk-key" onclick="pinKey('5')">5</button>
+        <button class="lk-key" onclick="pinKey('6')">6</button>
+        <button class="lk-key" onclick="pinKey('7')">7</button>
+        <button class="lk-key" onclick="pinKey('8')">8</button>
+        <button class="lk-key" onclick="pinKey('9')">9</button>
+        <div></div>
+        <button class="lk-key" onclick="pinKey('0')">0</button>
+        <button class="lk-key lk-del" onclick="pinDel()">&#x232B;</button>
+    </div>
+
+    <div class="lk-msg" id="lkMsg"></div>
+
+    <!-- Bouton code oublié — caché en mode création -->
+    <button class="lk-forgot" id="lkForgotBtn"
+            onclick="lkForgotToggle()" style="display:none">
+        Code oublié&nbsp;?
+    </button>
+
+    <!-- Panneau récupération -->
+    <div class="lk-panel" id="lkPanel" style="display:none">
+        <div class="lk-panel-title">&#x1F513; Code oubli&#xe9;&nbsp;?</div>
+
+        <!-- Confirmation identité -->
+        <div id="lkStep1">
+            <p style="font-size:.75rem;color:rgba(255,255,255,.65);
+                      line-height:1.6;margin-bottom:14px;
+                      font-family:'Inter',sans-serif">
+                Votre contact enregistr&#xe9;&nbsp;:
+            </p>
+            <div class="lk-panel-contact" id="lkContact"
+                 style="margin-bottom:16px"></div>
+            <button class="lk-panel-btn" onclick="lkRevealCode()">
+                &#x1F441; Afficher le code de r&#xe9;initialisation
+            </button>
+            <p style="font-size:.62rem;color:rgba(255,255,255,.25);
+                      margin-top:10px;line-height:1.4;
+                      font-family:'Inter',sans-serif">
+                Le code est unique et li&#xe9; &#xe0; votre contact.
+                Notez-le ou photographiez-le.
+            </p>
+        </div>
+
+        <!-- Code affiché -->
+        <div id="lkStep2" style="display:none">
+            <p style="font-size:.72rem;color:rgba(255,255,255,.5);
+                      margin-bottom:10px;font-family:'Inter',sans-serif">
+                Votre code de r&#xe9;initialisation&nbsp;:
+            </p>
+            <div id="lkCodeDisplay"
+                 style="font-size:1.6rem;font-weight:800;letter-spacing:.18em;
+                        color:#4ade80;text-align:center;padding:16px 0;
+                        font-family:'Inter',sans-serif"></div>
+            <p style="font-size:.68rem;color:rgba(255,255,255,.35);
+                      text-align:center;margin-bottom:16px;
+                      font-family:'Inter',sans-serif">
+                Saisissez ce code ci-dessous
+            </p>
+            <input class="lk-panel-input" id="lkResetInput"
+                   type="text" placeholder="XXXX-XXXX" maxlength="9"
+                   oninput="this.value=this.value.toUpperCase()"
+                   autocomplete="off" spellcheck="false">
+            <button class="lk-panel-btn" onclick="lkResetConfirm()">
+                &#x2705; R&#xe9;initialiser le PIN
+            </button>
+            <div class="lk-panel-msg" id="lkResetMsg"></div>
+        </div>
+
+        <p class="lk-panel-manual">
+            Dernier recours&nbsp;: R&#xe9;glages &#x2192; Safari
+            &#x2192; Avanc&#xe9; &#x2192; Donn&#xe9;es des sites
+            &#x2192; Supprimer belraine.github.io
+        </p>
+    </div>
+
+</div>
+
+CTYPE html>
+
+
+<div class="app-header">
+    <div class="app-title">
+        <div class="app-title-icon">&#x1F4E1;</div>
+        Scanning Equipment Tool
+    </div>
+    <div style="display:flex;align-items:center;gap:8px">
+        <button id="hdrLockBtn" class="hdr-lock-btn"
+                onclick="appLock()" style="display:none"
+                title="Verrouiller">&#x1F512;</button>
+        <div class="app-version">V9.5</div>
+    </div>
+</div>
+
+<!-- ACCUEIL -->
+<div id="accueil" class="content active">
+<div class="home-wrap">
+    <div class="home-label">Navigation rapide</div>
+    <div class="home-grid">
+        <div class="home-tile" onclick="switchTabById('saisie')">
+            <div class="home-tile-icon tile-blue">👤</div>
+            <div class="home-tile-label">Client</div>
+        </div>
+        <div class="home-tile" onclick="switchTabById('garantie')">
+            <div class="home-tile-icon tile-teal">🔍</div>
+            <div class="home-tile-label">Garantie</div>
+        </div>
+        <div class="home-tile" onclick="switchTabById('historique')">
+            <div class="home-tile-icon tile-purple">📋</div>
+            <div class="home-tile-label">Historique</div>
+        </div>
+        <div class="home-tile" onclick="switchTabById('dashboard')">
+            <div class="home-tile-icon tile-orange">📊</div>
+            <div class="home-tile-label">Dashboard</div>
+        </div>
+        <div class="home-tile" onclick="switchTabById('backup')">
+            <div class="home-tile-icon tile-green">💾</div>
+            <div class="home-tile-label">Sauvegarde</div>
+        </div>
+        <div class="home-tile" onclick="switchTabById('securite')">
+            <div class="home-tile-icon tile-pink">&#x1F510;</div>
+            <div class="home-tile-label">S&#xe9;curit&#xe9;</div>
+        </div>
+    </div>
+    <div class="home-label">Résumé</div>
+    <div class="home-stats">
+        <div class="home-stat">
+            <div class="home-stat-val" id="hs-total">0</div>
+            <div class="home-stat-label">Dossiers</div>
+        </div>
+        <div class="home-stat">
+            <div class="home-stat-val" id="hs-retard" style="color:var(--danger)">0</div>
+            <div class="home-stat-label">En retard</div>
+        </div>
+        <div class="home-stat">
+            <div class="home-stat-val" id="hs-gar" style="color:var(--success)">0</div>
+            <div class="home-stat-label">Garanties actives</div>
+        </div>
+    </div>
+</div>
+</div>
+
+<!-- SAISIE -->
+<div id="saisie" class="content">
+    <button class="btn-back" onclick="goAccueil()">🏠</button>
+
+    <div class="edit-banner" id="edit-banner">
+        &#9999;&#65039; Mode Modification &mdash; <span id="edit-client-name"></span>
+    </div>
+    <input type="hidden" id="edit-id" value="">
+
+    <div class="card">
+        <div class="section-title">Client</div>
+        <div class="field"><label>Nom &amp; Pr&eacute;nom <span class="req">*</span></label><input type="text" id="c_nom" placeholder="Ex: Jean Dupont" required></div>
+        <div class="field"><label>Adresse</label><input type="text" id="c_adr" placeholder="Rue, ville, code postal"></div>
+        <div class="field-row field-row-2">
+            <div class="field"><label>Indicatif</label>
+                <select id="c_indicatif">
+                    <option value="+212">&#127474;&#127462; MA (+212)</option>
+                    <option value="+33">&#127467;&#127479; FR (+33)</option>
+                    <option value="+41" selected>&#127464;&#127469; CH (+41)</option>
+                    <option value="+32">&#127463;&#127466; BE (+32)</option>
+                    <option value="+1">&#127482;&#127480; US (+1)</option>
+                </select>
+            </div>
+            <div class="field"><label>T&eacute;l&eacute;phone</label><input type="tel" id="c_tel" placeholder="079 123 45 67"></div>
+        </div>
+        <div class="field" style="position:relative">
+            <label>Date de Vente</label>
+            <input type="date" id="c_date" onchange="majDateVenteDisplay(); calculerDatesGarantie();" style="position:absolute;opacity:0;width:100%;height:46px;top:22px;left:0;cursor:pointer;z-index:2">
+            <div class="date-display" id="c_date_display" style="cursor:pointer; background:white; position:relative; z-index:1">📅 —</div>
+        </div>
+    </div>
+
+    <div class="card">
+        <div class="section-title">Produit</div>
+        <div class="field-row field-row-2">
+            <div class="field"><label>Type</label>
+                <select id="p_type" onchange="updateCategories()">
+                    <option value="TV">&#128250; T&eacute;l&eacute;vision</option>
+                    <option value="PC">&#128187; Ordinateur</option>
+                    <option value="Imprimante">&#128424;&#65039; Imprimante</option>
+                    <option value="Telephone">&#128241; T&eacute;l&eacute;phone</option>
+                    <option value="Tablette">&#128223; Tablette</option>
+                    <option value="Accessoire">&#128268; Accessoire</option>
+                    <option value="Autre">&#128230; Autre</option>
+                </select>
+            </div>
+            <div class="field"><label>Cat&eacute;gorie</label><select id="p_cat"></select></div>
+        </div>
+        <div class="field"><label>Marque</label><input type="text" id="p_marque" placeholder="Ex: Samsung, Apple, HP..."></div>
+        <!-- Champs TV uniquement -->
+        <div class="field-row field-row-2" id="tv_fields" style="display:none">
+            <div class="field"><label>Taille (&Prime;)</label><input type="text" id="p_taille" placeholder="Ex: 55, 65, 75..."></div>
+            <div class="field"><label>S&#xe9;rie</label><input type="text" id="p_serie" placeholder="Ex: Q80B, X90L..."></div>
+        </div>
+        <div class="field"><label>Mod&egrave;le <span class="req">*</span></label><input type="text" id="p_mod" placeholder="Ex: Galaxy S23, MacBook Air..." required></div>
+        <div class="field">
+            <label>N° de Série (S/N) <span class="req">*</span></label>
+            <input type="file" id="scanner-input" accept="image/*" capture="environment" style="display:none" onchange="traiterPhotoScan(event)">
+            <button type="button" class="btn-scan" onclick="document.getElementById('scanner-input').click()">📷 Scanner Code-Barres / QR Code</button>
+            <input type="text" id="p_sn" class="sn-input" placeholder="Ou saisir le S/N manuellement" required>
+        </div>
+        <div class="field"><label>Notes / Remarques</label><input type="text" id="p_notes" placeholder="Couleur, config, accessoires inclus..."></div>
+    </div>
+
+    <div class="card">
+        <div class="section-title">Finances</div>
+        <div class="field-row field-row-3">
+            <div class="field"><label>Devise</label>
+                <select id="f_devise" onchange="majPaiement()">
+                    <option value="MAD">MAD</option>
+                    <option value="EUR">EUR</option>
+                    <option value="USD">USD</option>
+                    <option value="CHF" selected>CHF</option>
+                </select>
+            </div>
+            <div class="field"><label>Prix Vente <span class="req">*</span></label><input type="number" id="f_prix" placeholder="0.00" oninput="majPaiement()"></div>
+            <div class="field"><label>Montant Vers&eacute;</label><input type="number" id="f_verse" placeholder="0.00" oninput="majPaiement()"></div>
+        </div>
+        <div class="field-row field-row-2" style="margin-top:10px">
+            <div class="field"><label>Date Échéance Paiement</label>
+            <div style="position:relative">
+                <input type="date" id="f_echeance" onchange="majPaiement(); majEcheanceDisplay();" style="position:absolute;opacity:0;width:100%;height:46px;top:0;left:0;cursor:pointer;z-index:2">
+                <div class="date-display" id="f_echeance_display" onclick="document.getElementById('f_echeance').click()" style="cursor:pointer;background:white;position:relative;z-index:1">📅 —</div>
+            </div>
+        </div>
+            <div class="field"><label>Retard de Paiement</label><input type="text" id="f_retard" readonly style="background:#f1f5f9;color:var(--muted)"></div>
+        </div>
+        <div id="paiement_statut" class="payment-status neutral" style="margin-top:10px">RESTE : 0.00</div>
+    </div>
+
+    <div class="card">
+        <div class="section-title">&#128737;&#65039; Garantie</div>
+        <div class="field-row field-row-3">
+            <div class="field"><label>Dur&eacute;e (mois)</label>
+                <input type="number" id="g_std" value="12" min="1"
+                       oninput="calculerDatesGarantie()"></div>
+            <div class="field"><label>Date D&eacute;but</label>
+                <div style="position:relative">
+                    <input type="date" id="g_start_std"
+                           onchange="majStartGarantie()"
+                           style="position:absolute;opacity:0;width:100%;height:46px;top:0;left:0;cursor:pointer;z-index:2">
+                    <div class="date-display" id="g_start_std_display"
+                         onclick="document.getElementById('g_start_std').click()"
+                         style="cursor:pointer;background:white;position:relative;z-index:1">📅 &mdash;</div>
+                </div>
+            </div>
+            <div class="field"><label>Date Fin</label>
+                <input type="date" id="g_end_std" style="display:none">
+                <div class="date-display" id="g_end_std_display">&mdash;</div>
+            </div>
+        </div>
+        <div id="gar_status_saisie" class="payment-status neutral"
+             style="margin-top:10px">&#8212; jours restants</div>
+
+        <!-- Extension garantie -->
+        <div style="margin-top:14px;padding-top:12px;border-top:1px solid var(--border)">
+            <!-- Toggle extension -->
+            <div style="display:flex;align-items:center;
+                        justify-content:space-between;padding:4px 0 10px">
+                <div>
+                    <div style="font-size:.88rem;font-weight:600;color:var(--text)"
+                         id="extToggleLabel">Extension garantie d&eacute;sactiv&eacute;e</div>
+                    <div style="font-size:.75rem;color:var(--muted);margin-top:2px"
+                         id="extToggleSub">Touchez pour activer</div>
+                </div>
+                <div class="sec-toggle" id="extToggle" onclick="toggleExtension()">
+                    <div class="sec-toggle-knob" id="extToggleKnob"></div>
+                </div>
+            </div>
+            <!-- Zone extension (visible si ON) -->
+            <div id="ext_zone" style="display:none">
+                <div class="field">
+                    <label>Dur&eacute;e Extension (mois)</label>
+                    <input type="number" id="g_ext_mois" value="12" min="1"
+                           oninput="calculerDatesGarantie()">
+                </div>
+                <div class="field-row field-row-2" style="margin-top:6px">
+                    <div class="field"><label>D&eacute;but Extension</label>
+                        <input type="date" id="g_start_ext" style="display:none">
+                        <div class="date-display" id="g_start_ext_display">&mdash;</div>
+                    </div>
+                    <div class="field"><label>Fin Extension</label>
+                        <input type="date" id="g_end_ext" style="display:none">
+                        <div class="date-display" id="g_end_ext_display">&mdash;</div>
+                    </div>
+                </div>
+
+                <!-- Toggle facturable -->
+                <div style="display:flex;align-items:center;
+                            justify-content:space-between;
+                            padding:10px 0 8px;
+                            margin-top:10px;
+                            border-top:1px solid var(--border)">
+                    <div>
+                        <div style="font-size:.85rem;font-weight:600;color:var(--text)"
+                             id="extFactLabel">Facturable</div>
+                        <div style="font-size:.73rem;color:var(--muted);margin-top:2px"
+                             id="extFactSub">Non facturable</div>
+                    </div>
+                    <div class="sec-toggle" id="extFactToggle"
+                         onclick="toggleExtFact()">
+                        <div class="sec-toggle-knob" id="extFactKnob"></div>
+                    </div>
+                </div>
+
+                <!-- Bloc facturation (visible si facturable ON) -->
+                <div id="ext_fact_zone" style="display:none;
+                     padding:12px;background:#f0fdf4;
+                     border-radius:10px;border:1px solid #86efac;
+                     margin-top:4px">
+                    <div style="font-size:.78rem;font-weight:700;
+                                color:#166534;margin-bottom:10px">
+                        🛡 Facturation de l'extension
+                    </div>
+                    <div class="field-row field-row-3">
+                        <div class="field"><label>Prix ext.</label>
+                            <input type="number" id="g_ext_prix"
+                                   placeholder="0.00" oninput="majExtPaiement()"></div>
+                        <div class="field"><label>Vers&eacute; ext.</label>
+                            <input type="number" id="g_ext_verse"
+                                   placeholder="0.00" oninput="majExtPaiement()"></div>
+                        <div class="field"><label>Devise</label>
+                            <select id="g_ext_devise" onchange="majExtPaiement()">
+                                <option value="MAD">MAD</option>
+                                <option value="EUR">EUR</option>
+                                <option value="USD">USD</option>
+                                <option value="CHF" selected>CHF</option>
+                            </select></div>
+                    </div>
+                    <div id="ext_paiement_statut"
+                         class="payment-status neutral"
+                         style="margin-top:8px">RESTE EXT : 0.00</div>
+                </div>
+            </div>
+        </div>
+   </div>
+
+    <div class="btn-row">
+        <button onclick="viderFormulaire()" style="flex:1;background:linear-gradient(135deg,#f97316,#ef4444);color:#fff;border:none;border-radius:9px;padding:12px 10px;font-size:.875rem;font-weight:700;font-family:'Inter',sans-serif;cursor:pointer;letter-spacing:.01em">&#x21BA; R&#xe9;initialiser</button>
+        <button class="btn-primary" onclick="sauvegarder()">&#128190; Enregistrer</button>
+    </div>
+</div>
+
+<!-- DASHBOARD -->
+<div id="dashboard" class="content">
+    <button class="btn-back" onclick="goAccueil()">🏠</button>
+
+    <div class="period-selector">
+        <button class="period-btn active" onclick="setPeriod('all',this)">Tout</button>
+        <button class="period-btn" onclick="setPeriod('month',this)">Ce mois</button>
+        <button class="period-btn" onclick="setPeriod('quarter',this)">3 mois</button>
+        <button class="period-btn" onclick="setPeriod('year',this)">Cette ann&eacute;e</button>
+    </div>
+    <div class="dash-kpi-grid" id="dash_kpis"></div>
+    <div class="card"><div class="section-title">&#128230; Ventes par Type</div><div class="bar-chart" id="dash_bar_types"></div></div>
+    <div class="card"><div class="section-title">&#9888;&#65039; Garanties Expirant dans 30 Jours</div><div id="dash_expiring"></div></div>
+    <div class="card"><div class="section-title">&#128184; Paiements en Attente</div><div id="dash_pending"></div></div>
+    <div class="card"><div class="section-title">&#128308; Retards de Paiement</div><div id="dash_retards"></div></div>
+</div>
+
+<!-- GARANTIE -->
+<div id="garantie" class="content">
+    <button class="btn-back" onclick="goAccueil()">🏠</button>
+
+    <div class="card">
+        <div class="section-title">&#128269; V&eacute;rifier une Garantie</div>
+        <p style="font-size:0.8rem;color:var(--muted);margin-bottom:14px;line-height:1.5">
+            Recherchez par <strong>nom</strong>, <strong>n&deg; de s&eacute;rie</strong> ou <strong>t&eacute;l&eacute;phone</strong>.
+        </p>
+        <div class="search-wrap">
+            <span class="search-icon">&#128269;</span>
+            <input type="text" id="gar_search" placeholder="Nom, N&deg; de s&eacute;rie, t&eacute;l&eacute;phone..." oninput="rechercherGarantie()">
+        </div>
+        <button class="btn-primary" style="width:100%;margin-top:8px" onclick="rechercherGarantie()">V&eacute;rifier</button>
+    </div>
+    <div id="gar_results"></div>
+</div>
+
+<!-- HISTORIQUE -->
+<div id="historique" class="content">
+    <button class="btn-back" onclick="goAccueil()">🏠</button>
+
+    <div class="stats-bar" id="stats_bar"></div>
+    <div class="search-wrap">
+        <span class="search-icon">&#128269;</span>
+        <input type="text" id="search_input" placeholder="Rechercher client, mod&egrave;le, S/N..." oninput="chargerHistorique()">
+    </div>
+    <div style="margin-bottom:14px;display:flex;gap:8px;flex-wrap:wrap">
+        <select id="filter_type" onchange="chargerHistorique()" style="flex:1;min-width:100px;font-size:0.78rem;padding:8px">
+            <option value="">Tous types</option>
+            <option value="TV">&#128250; TV</option>
+            <option value="PC">&#128187; PC</option>
+            <option value="Imprimante">&#128424; Imprimante</option>
+            <option value="Telephone">&#128241; T&eacute;l</option>
+            <option value="Tablette">&#128223; Tablette</option>
+            <option value="Accessoire">&#128268; Accessoire</option>
+            <option value="Autre">&#128230; Autre</option>
+        </select>
+        <select id="filter_status" onchange="chargerHistorique()" style="flex:1;min-width:100px;font-size:0.78rem;padding:8px">
+            <option value="">Tous statuts</option>
+            <option value="ok">&#10003; Garantie OK</option>
+            <option value="soon">&#9888; Expire bient&ocirc;t</option>
+            <option value="exp">&#10060; Expir&eacute;</option>
+        </select>
+        <select id="filter_paiement" onchange="chargerHistorique()" style="flex:1;min-width:100px;font-size:0.78rem;padding:8px">
+            <option value="">Tous paiements</option>
+            <option value="paye">&#10003; Pay&eacute;</option>
+            <option value="attente">&#9650; Reste d&ucirc;</option>
+            <option value="retard">&#128308; En retard</option>
+        </select>
+    </div>
+    <div class="card" style="padding:0;overflow:hidden">
+        <div class="table-wrap">
+            <div id="hist_cards"></div>
+        </div>
+        <div class="empty-state" id="empty_state" style="display:none">
+            <div class="empty-icon">&#128205;</div>
+            <div>Aucun dossier trouv&eacute;</div>
+        </div>
+    </div>
+</div>
+
+<!-- BACKUP -->
+<div id="backup" class="content">
+    <button class="btn-back" onclick="goAccueil()">🏠</button>
+
+    <div class="card">
+        <div class="section-title">💾 Sauvegarde Manuelle</div>
+        <p style="font-size:0.8rem;color:var(--muted);margin-bottom:16px;line-height:1.5">Exportez vos données pour éviter toute perte.</p>
+        <button class="btn-green" style="width:100%;margin-bottom:10px" onclick="exporterExcel()">📊 Exporter Excel (.xlsx)</button>
+        <button class="btn-green" style="width:100%;margin-bottom:10px;background:#0369a1" onclick="exporterJSON()">💾 Sauvegarde complète de l'application</button>
+        <button class="btn-purple" style="width:100%;margin-bottom:6px" onclick="document.getElementById('importFile').click()">🔁 Récupérer une sauvegarde</button>
+        <input type="file" id="importFile" style="display:none" accept=".json" onchange="importerDonnees(event)">
+        <p style="font-size:0.72rem;color:var(--muted);margin-top:6px;line-height:1.4">
+            💡 <b>Excel</b> = consultation sur PC &nbsp;|&nbsp; <b>Sauvegarde complète</b> = restauration sur nouveau téléphone
+        </p>
+    </div>
+    <div class="card">
+        <div class="section-title">⏰ Planning de Sauvegarde Automatique</div>
+        <p style="font-size:0.8rem;color:var(--muted);margin-bottom:12px;line-height:1.5">Définissez la fréquence et l'heure de lancement automatique.</p>
+        <div class="field-row field-row-2">
+            <div class="field">
+                <label>Fréquence</label>
+                <select id="backup_frequence">
+                    <option value="0">Désactivé</option>
+                    <option value="1">Chaque jour</option>
+                    <option value="7" selected>Chaque semaine</option>
+                    <option value="30">Chaque mois</option>
+                </select>
+            </div>
+            <div class="field">
+                <label>Heure de lancement</label>
+                <select id="backup_heure">
+                    <option value="6">06:00</option>
+                    <option value="7">07:00</option>
+                    <option value="8" selected>08:00</option>
+                    <option value="9">09:00</option>
+                    <option value="10">10:00</option>
+                    <option value="12">12:00</option>
+                    <option value="14">14:00</option>
+                    <option value="18">18:00</option>
+                    <option value="20">20:00</option>
+                    <option value="22">22:00</option>
+                </select>
+            </div>
+        </div>
+        <button class="btn-primary" style="width:100%;margin-top:6px" onclick="enregistrerPlanning()">✅ Enregistrer le planning</button>
+        <div id="backup_status" style="font-size:0.78rem;color:var(--muted);margin-top:10px;padding:10px;background:var(--surface);border-radius:8px;line-height:1.8"></div>
+        <button class="btn-green" style="width:100%;margin-top:10px" onclick="backupMaintenant()">💾 Sauvegarder maintenant</button>
+    </div>
+    <div class="card">
+        <div class="section-title">☁️ Synchronisation Firebase</div>
+        <div id="firebase_status" style="font-size:0.8rem;margin-bottom:12px;padding:8px;background:var(--surface);border-radius:8px">
+            <span style="color:#94a3b8">⏳ Connexion en cours...</span>
+        </div>
+        <button class="btn-primary" style="width:100%;margin-bottom:10px" onclick="syncToutFirebase()">🔄 Synchroniser tout vers Firebase</button>
+        <button class="btn-green" style="width:100%" onclick="chargerDepuisFirebase()">⬇️ Recharger depuis Firebase</button>
+        <p style="font-size:0.72rem;color:var(--muted);margin-top:10px;line-height:1.4">
+            💡 Chaque enregistrement est automatiquement sauvegardé sur Firebase. En cas de perte du téléphone, rechargez simplement depuis Firebase.
+        </p>
+    </div>
+    <div class="card">
+        <div class="section-title">&#9888;&#65039; Zone Danger</div>
+        <button onclick="effacerTout()" style="background:#fee2e2;color:#991b1b;width:100%">&#128465;&#65039; Effacer toutes les donn&eacute;es</button>
+    </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+let db = [];
+
+// ════════════════════════════════════════
+// FIREBASE REST API — Sans librairie externe
+// ════════════════════════════════════════
+const FB_PROJECT  = 'scanning-equipment-tool';
+const FB_API_KEY  = 'AIzaSyC-4CF61GfFBDKMIrJFoLJvgB880eVb4us';
+const FB_BASE_URL = `https://firestore.googleapis.com/v1/projects/${FB_PROJECT}/databases/(default)/documents`;
+const FB_AUTH_URL = `https://identitytoolkit.googleapis.com/v1/accounts:signUp?key=${FB_API_KEY}`;
+
+let firebaseOK  = false;
+let fbToken     = null;
+let fbLocalKey  = 'fb_id_token';
+let fbTokenExp  = 0;
+
+// ── Auth anonyme via REST ──
+async function initFirebase() {
+    majStatutFirebase(null);
+    try {
+        // Récupérer token existant
+        const saved = localStorage.getItem(fbLocalKey);
+        const savedExp = parseInt(localStorage.getItem('fb_token_exp') || '0');
+        if(saved && Date.now() < savedExp) {
+            fbToken    = saved;
+            firebaseOK = true;
+            majStatutFirebase(true);
+            chargerDepuisFirebase();
+            return;
+        }
+        // Nouveau token anonyme
+        const res = await fetch(FB_AUTH_URL, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ returnSecureToken: true })
+        });
+        const data = await res.json();
+        if(data.idToken) {
+            fbToken    = data.idToken;
+            firebaseOK = true;
+            const exp  = Date.now() + (parseInt(data.expiresIn || 3600) * 1000);
+            localStorage.setItem(fbLocalKey, fbToken);
+            localStorage.setItem('fb_token_exp', String(exp));
+            console.log('✅ Firebase Auth OK');
+            majStatutFirebase(true);
+            chargerDepuisFirebase();
+        } else {
+            throw new Error(data.error?.message || 'Auth failed');
+        }
+    } catch(e) {
+        console.error('❌ Firebase init:', e);
+        firebaseOK = false;
+        majStatutFirebase(false);
+    }
+}
+
+function majStatutFirebase(ok) {
+    const el = document.getElementById('firebase_status');
+    if(!el) return;
+    if(ok === null)  el.innerHTML = '<span style="color:#d97706">🟡 Connexion Firebase en cours...</span>';
+    else if(ok)      el.innerHTML = '<span style="color:#059669">🟢 Connecté à Firebase — données synchronisées</span>';
+    else             el.innerHTML = '<span style="color:#dc2626">🔴 Firebase non connecté — données locales uniquement</span>';
+}
+
+// ── Convertir objet JS → format Firestore ──
+function toFirestore(obj) {
+    const fields = {};
+    for(const [k, v] of Object.entries(obj)) {
+        if(v === null || v === undefined) fields[k] = { nullValue: null };
+        else if(typeof v === 'boolean')   fields[k] = { booleanValue: v };
+        else if(typeof v === 'number')    fields[k] = { doubleValue: v };
+        else                              fields[k] = { stringValue: String(v) };
+    }
+    return { fields };
+}
+
+// ── Convertir format Firestore → objet JS ──
+function fromFirestore(doc) {
+    const obj = {};
+    if(!doc.fields) return obj;
+    for(const [k, v] of Object.entries(doc.fields)) {
+        if(v.stringValue  !== undefined) obj[k] = v.stringValue;
+        else if(v.doubleValue  !== undefined) obj[k] = v.doubleValue;
+        else if(v.integerValue !== undefined) obj[k] = parseInt(v.integerValue);
+        else if(v.booleanValue !== undefined) obj[k] = v.booleanValue;
+        else obj[k] = null;
+    }
+    return obj;
+}
+
+// ── Headers avec auth ──
+function fbHeaders() {
+    return {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${fbToken}`
+    };
+}
+
+// ── Sauvegarder un dossier ──
+async function sauvegarderFirebase(item) {
+    if(!firebaseOK || !fbToken) return;
+    try {
+        await fetch(`${FB_BASE_URL}/dossiers/${item.id}`, {
+            method: 'PATCH',
+            headers: fbHeaders(),
+            body: JSON.stringify(toFirestore(item))
+        });
+    } catch(e) { console.error('Firebase save:', e); }
+}
+
+// ── Supprimer un dossier ──
+async function supprimerFirebase(id) {
+    if(!firebaseOK || !fbToken) return;
+    try {
+        await fetch(`${FB_BASE_URL}/dossiers/${id}`, {
+            method: 'DELETE',
+            headers: fbHeaders()
+        });
+    } catch(e) { console.error('Firebase delete:', e); }
+}
+
+// ── Charger tous les dossiers ──
+async function chargerDepuisFirebase() {
+    if(!firebaseOK || !fbToken) return;
+    try {
+        const res = await fetch(`${FB_BASE_URL}/dossiers`, { headers: fbHeaders() });
+        const data = await res.json();
+        const fbData = (data.documents || []).map(doc => fromFirestore(doc));
+
+        if(fbData.length === 0 && db.length > 0) {
+            // Firebase vide mais données locales → tout envoyer vers Firebase
+            showToast('☁️ Envoi vers Firebase...', '');
+            for(const item of db) await sauvegarderFirebase(item);
+            showToast('✅ ' + db.length + ' dossiers envoyés vers Firebase !', 'success');
+            majStatutFirebase(true);
+            return;
+        }
+
+        if(fbData.length === 0) return;
+
+        // Fusion : prendre le plus récent pour chaque dossier
+        const merged = {};
+        // Mettre d'abord les données locales
+        db.forEach(item => { merged[item.id] = item; });
+        // Écraser avec Firebase si updated_at est plus récent
+        fbData.forEach(item => {
+            if(!merged[item.id] || String(item.updated_at) >= String(merged[item.id].updated_at)) {
+                merged[item.id] = item;
+            }
+        });
+        db = Object.values(merged);
+        localStorage.setItem('garantie_db_v4', JSON.stringify(db));
+
+        // Pousser les dossiers locaux manquants vers Firebase
+        const fbIds = new Set(fbData.map(x => String(x.id)));
+        const aEnvoyer = db.filter(x => !fbIds.has(String(x.id)));
+        for(const item of aEnvoyer) await sauvegarderFirebase(item);
+
+        showToast('🟢 ' + db.length + ' dossiers synchronisés', 'success');
+        majStatutFirebase(true);
+        chargerHistorique();
+        majStatsAccueil();
+    } catch(e) { console.error('Firebase load:', e); majStatutFirebase(false); }
+}
+
+// Sync complète locale → Firebase
+async function syncToutFirebase() {
+    if(!firebaseOK || !fbToken) {
+        showToast('❌ Firebase non connecté', 'error');
+        return;
+    }
+    showToast('☁️ Synchronisation en cours...', '');
+    try {
+        for(const item of db) { await sauvegarderFirebase(item); }
+        showToast('✅ ' + db.length + ' dossiers synchronisés !', 'success');
+        majStatutFirebase(true);
+    } catch(e) {
+        showToast('❌ Erreur sync: ' + e.message, 'error');
+    }
+}
+try { db = JSON.parse(localStorage.getItem('garantie_db_v4')) || [];
+    setTimeout(() => { planifierBackup(); majStatutBackup(); verifierBackupDu(); }, 1000);
+    setTimeout(() => initFirebase(), 500);
+    majStatsAccueil(); } catch(e) { db = []; }
+let dashPeriod = 'all';
+
+const CATEGORIES = {
+    TV:['LED','OLED','QLED','Mini-LED','Neo QLED','LCD','Autre'],
+    PC:['Laptop','Desktop','All-in-One','MacBook','Gaming','Chromebook','Autre'],
+    Imprimante:["Jet d'encre",'Laser Noir','Laser Couleur','Multifonction','Photo','Autre'],
+    Telephone:['Android','iPhone','Samsung Galaxy','Huawei','Xiaomi','Autre'],
+    Tablette:['iPad','Android','Samsung Galaxy Tab','Surface','Autre'],
+    Accessoire:['Clavier','Souris','Ecran','Casque','Webcam','Disque dur','Cable','Autre'],
+    Autre:['Autre']
+};
+
+window.onload = () => {
+    document.getElementById('c_date').value = today();
+    majDateVenteDisplay();
+    updateCategories();
+    calculerDatesGarantie();
+};
+
+function today() { return new Date().toISOString().split('T')[0]; }
+function todayTime() {
+    const n = new Date();
+    const d = n.toISOString().split('T')[0];
+    const h = String(n.getHours()).padStart(2,'0');
+    const m = String(n.getMinutes()).padStart(2,'0');
+    return d + '_' + h + 'h' + m;
+}
+
+function goAccueil() {
+    document.querySelectorAll('.content').forEach(c => c.classList.remove('active'));
+    document.getElementById('accueil').classList.add('active');
+    document.getElementById('edit-banner').classList.remove('visible');
+    document.getElementById('edit-id').value = '';
+    majStatsAccueil();
+    window.scrollTo(0,0);
+}
+
+function switchTabById(name) {
+    document.querySelectorAll('.content').forEach(c => c.classList.remove('active'));
+    document.getElementById(name).classList.add('active');
+    if(name === 'dashboard') renderDashboard();
+    if(name === 'historique') chargerHistorique();
+    window.scrollTo(0,0);
+}
+
+function majStatsAccueil() {
+    const today = new Date();
+    const retard = db.filter(d => d.echeance && (d.prix||0)-(d.verse||0) > 0 && new Date(d.echeance) < today).length;
+    const actives = db.filter(d => d.fin_garantie && new Date(d.fin_garantie) >= today).length;
+    const e1 = document.getElementById('hs-total');
+    const e2 = document.getElementById('hs-retard');
+    const e3 = document.getElementById('hs-gar');
+    if(e1) e1.textContent = db.length;
+    if(e2) e2.textContent = retard;
+    if(e3) e3.textContent = actives;
+}
+
+function switchTab(evt, name) {
+    document.querySelectorAll('.content').forEach(c => c.classList.remove('active'));
+    document.querySelectorAll('.nav-item').forEach(t => t.classList.remove('active'));
+    document.getElementById(name).classList.add('active');
+    evt.currentTarget.classList.add('active');
+    if(name === 'historique') chargerHistorique();
+    if(name === 'dashboard') renderDashboard();
+}
+
+function updateCategories() {
+    var type = document.getElementById('p_type').value;
+    var cats = CATEGORIES[type] || ['Autre'];
+    document.getElementById('p_cat').innerHTML =
+        cats.map(function(c){return '<option>'+c+'</option>';}).join('');
+    var tvFields = document.getElementById('tv_fields');
+    if (tvFields) tvFields.style.display = type === 'TV' ? 'flex' : 'none';
+    if (type !== 'TV') {
+        var t = document.getElementById('p_taille');
+        var s = document.getElementById('p_serie');
+        if (t) t.value = '';
+        if (s) s.value = '';
+    }
+}
+
+
+function majPaiement() {
+    const prix  = parseFloat(document.getElementById('f_prix').value)  || 0;
+    const verse = parseFloat(document.getElementById('f_verse').value) || 0;
+    const reste = prix - verse;
+    const dev   = document.getElementById('f_devise').value;
+    const div   = document.getElementById('paiement_statut');
+
+    if(prix === 0) {
+        div.textContent = 'RESTE : 0.00';
+        div.className = 'payment-status neutral';
+    } else if(reste <= 0) {
+        div.textContent = 'PAYE INTEGRALEMENT';
+        div.className = 'payment-status paid';
+    } else {
+        div.textContent = 'RESTE : ' + reste.toFixed(2) + ' ' + dev;
+        div.className = 'payment-status unpaid';
+    }
+
+    const echeanceVal = document.getElementById('f_echeance').value;
+    const retardEl    = document.getElementById('f_retard');
+    if(!echeanceVal || reste <= 0) {
+        retardEl.value = reste <= 0 ? 'Aucun retard' : '---';
+        retardEl.style.background = '#f1f5f9';
+        retardEl.style.color = 'var(--muted)';
+        return;
+    }
+
+    // Validation : échéance ne peut pas être avant la date d'achat
+    const dateAchat = document.getElementById('c_date').value;
+    if(dateAchat && echeanceVal < dateAchat) {
+        document.getElementById('f_echeance').value = dateAchat;
+        showToast("⚠️ L'échéance ne peut pas être avant la date d'achat !", 'error');
+        majPaiement();
+        return;
+    }
+
+    const joursRetard = Math.ceil((new Date() - new Date(echeanceVal)) / 86400000);
+    if(joursRetard < 0) {
+        retardEl.value = 'Echeance dans ' + Math.abs(joursRetard) + ' jour(s)';
+        retardEl.style.background = '#fef3c7';
+        retardEl.style.color = '#92400e';
+    } else if(joursRetard === 0) {
+        retardEl.value = "Echeance aujourd'hui !";
+        retardEl.style.background = '#fef3c7';
+        retardEl.style.color = '#92400e';
+    } else {
+        retardEl.value = joursRetard + ' jour(s) de RETARD';
+        retardEl.style.background = '#fee2e2';
+        retardEl.style.color = '#991b1b';
+    }
+}
+
+function toggleExtension() {
+    var tog   = document.getElementById('extToggle');
+    var knob  = document.getElementById('extToggleKnob');
+    var lbl   = document.getElementById('extToggleLabel');
+    var sub   = document.getElementById('extToggleSub');
+    var zone  = document.getElementById('ext_zone');
+    var gStd  = document.getElementById('g_std');
+    // Bascule état
+    var isOn  = tog.classList.contains('on');
+    if (isOn) {
+        // Désactiver
+        tog.classList.remove('on');
+        knob.textContent = '';
+        lbl.textContent  = 'Extension garantie désactivée';
+        sub.textContent  = 'Touchez pour activer';
+        zone.style.display = 'none';
+        gStd.removeAttribute('readonly');
+        gStd.style.background = ''; gStd.style.color = '';
+        gStd.style.cursor = ''; gStd.title = '';
+        // Reset facturation
+        var ep = document.getElementById('g_ext_prix');
+        var ev = document.getElementById('g_ext_verse');
+        if (ep) ep.value = ''; if (ev) ev.value = '';
+        var es = document.getElementById('ext_paiement_statut');
+        if (es) { es.textContent = 'RESTE EXT : 0.00'; es.className = 'payment-status neutral'; }
+        // Reset toggle facturable
+        var ft = document.getElementById('extFactToggle');
+        var fk = document.getElementById('extFactKnob');
+        var fl = document.getElementById('extFactLabel');
+        var fs = document.getElementById('extFactSub');
+        var fz = document.getElementById('ext_fact_zone');
+        if (ft) ft.classList.remove('on');
+        if (fk) fk.textContent = '';
+        if (fl) fl.textContent = 'Facturable';
+        if (fs) fs.textContent = 'Non facturable';
+        if (fz) fz.style.display = 'none';
+    } else {
+        // Activer
+        tog.classList.add('on');
+        knob.textContent = '✓';
+        lbl.textContent  = 'Extension garantie activée';
+        sub.textContent  = 'Désactivez le verrou de durée';
+        zone.style.display = 'block';
+        gStd.setAttribute('readonly', 'readonly');
+        gStd.style.background = '#f1f5f9'; gStd.style.color = 'var(--muted)';
+        gStd.style.cursor = 'not-allowed'; gStd.title = 'Extension active';
+    }
+    calculerDatesGarantie();
+}
+
+function toggleExtFact() {
+    var tog = document.getElementById('extFactToggle');
+    var knob = document.getElementById('extFactKnob');
+    var lbl  = document.getElementById('extFactLabel');
+    var sub  = document.getElementById('extFactSub');
+    var zone = document.getElementById('ext_fact_zone');
+    var isOn = tog.classList.contains('on');
+    if (isOn) {
+        tog.classList.remove('on');
+        knob.textContent = '';
+        lbl.textContent  = 'Facturable';
+        sub.textContent  = 'Non facturable';
+        zone.style.display = 'none';
+        var ep = document.getElementById('g_ext_prix');
+        var ev = document.getElementById('g_ext_verse');
+        if (ep) ep.value = ''; if (ev) ev.value = '';
+        var es = document.getElementById('ext_paiement_statut');
+        if (es) { es.textContent = 'RESTE EXT : 0.00'; es.className = 'payment-status neutral'; }
+    } else {
+        tog.classList.add('on');
+        knob.textContent = '✓';
+        lbl.textContent  = 'Facturable';
+        sub.textContent  = 'Extension facturée au client';
+        zone.style.display = 'block';
+    }
+}
+
+
+const MOIS = ['Jan','év','Mar','Avr','Mai','Jun','Jul','Aoû','Sep','Oct','Nov','Déc'];
+function formatDate(isoStr) {
+    if(!isoStr) return '—';
+    const d = new Date(isoStr + 'T00:00:00');
+    return String(d.getDate()).padStart(2,'0') + '-' + MOIS[d.getMonth()] + '-' + d.getFullYear();
+}
+
+function majDateVenteDisplay() {
+    const val = document.getElementById('c_date').value;
+    const display = document.getElementById('c_date_display');
+    if(display) display.textContent = val ? '📅 ' + formatDate(val) : '📅 —';
+}
+
+function calculerDatesGarantie() {
+    const dateAchat = document.getElementById('c_date').value;
+    if (!dateAchat) return;
+    var startEl  = document.getElementById('g_start_std');
+    var startVal = startEl && startEl.value ? startEl.value : dateAchat;
+    // Initialiser date debut = date achat si vide
+    if (startEl && !startEl.value) {
+        startEl.value = dateAchat;
+        var sd0 = document.getElementById('g_start_std_display');
+        if (sd0) sd0.textContent = '📅 ' + formatDate(dateAchat);
+    }
+    const mois = parseInt(document.getElementById('g_std').value) || 12;
+    if (mois < 1) {
+        document.getElementById('g_std').value = 1;
+        showToast("⚠️ La durée doit être d'au moins 1 mois !", 'error');
+        return;
+    }
+    const finStd = new Date(startVal + 'T00:00:00');
+    finStd.setMonth(finStd.getMonth() + mois);
+    const finStdISO = finStd.toISOString().split('T')[0];
+    document.getElementById('g_end_std').value = finStdISO;
+    var sd = document.getElementById('g_start_std_display');
+    var ed = document.getElementById('g_end_std_display');
+    if (sd && !sd.textContent.replace('📅 —','').trim())
+        sd.textContent = '📅 ' + formatDate(startVal);
+    if (ed) ed.textContent = formatDate(finStdISO);
+    // Extension si toggle ON
+    var extOn = document.getElementById('extToggle') &&
+                document.getElementById('extToggle').classList.contains('on');
+    let finFinale = finStd;
+    if (extOn) {
+        const debutExt = new Date(finStd);
+        const finExt   = new Date(finStd);
+        finExt.setMonth(finExt.getMonth() + (parseInt(document.getElementById('g_ext_mois').value) || 12));
+        const debutExtISO = debutExt.toISOString().split('T')[0];
+        const finExtISO   = finExt.toISOString().split('T')[0];
+        document.getElementById('g_start_ext').value = debutExtISO;
+        document.getElementById('g_end_ext').value   = finExtISO;
+        const sde = document.getElementById('g_start_ext_display');
+        const ede = document.getElementById('g_end_ext_display');
+        if (sde) sde.textContent = formatDate(debutExtISO);
+        if (ede) ede.textContent = formatDate(finExtISO);
+        finFinale = finExt;
+    }
+    const jours = Math.ceil((finFinale - new Date()) / 86400000);
+    const st = document.getElementById('gar_status_saisie');
+    if (st) {
+        if (jours > 30)     { st.textContent = '✅ Garantie valide — ' + jours + ' jours restants'; st.className = 'payment-status paid'; }
+        else if (jours > 0) { st.textContent = '⚠ Expire bientôt — ' + jours + ' jours restants'; st.className = 'payment-status unpaid'; }
+        else                { st.textContent = '❌ Garantie EXPIRÉE'; st.className = 'payment-status unpaid'; }
+    }
+}
+
+
+function majStartGarantie() {
+    var startVal = document.getElementById('g_start_std').value;
+    if (!startVal) return;
+    var sd = document.getElementById('g_start_std_display');
+    if (sd) sd.textContent = '📅 ' + formatDate(startVal);
+    var mois = parseInt(document.getElementById('g_std').value) || 12;
+    var finStd = new Date(startVal + 'T00:00:00');
+    finStd.setMonth(finStd.getMonth() + mois);
+    var finStdISO = finStd.toISOString().split('T')[0];
+    document.getElementById('g_end_std').value = finStdISO;
+    var ed = document.getElementById('g_end_std_display');
+    if (ed) ed.textContent = formatDate(finStdISO);
+    var extOn = document.getElementById('extToggle') && document.getElementById('extToggle').classList.contains('on');
+    if (extOn) {
+        var finExt = new Date(finStd);
+        finExt.setMonth(finExt.getMonth() + (parseInt(document.getElementById('g_ext_mois').value) || 12));
+        var finExtISO = finExt.toISOString().split('T')[0];
+        document.getElementById('g_start_ext').value = finStdISO;
+        document.getElementById('g_end_ext').value   = finExtISO;
+        var sde = document.getElementById('g_start_ext_display');
+        var ede = document.getElementById('g_end_ext_display');
+        if (sde) sde.textContent = formatDate(finStdISO);
+        if (ede) ede.textContent = formatDate(finExtISO);
+    }
+    var finFinale = extOn
+        ? new Date(document.getElementById('g_end_ext').value + 'T00:00:00')
+        : finStd;
+    var jours = Math.ceil((finFinale - new Date()) / 86400000);
+    var st = document.getElementById('gar_status_saisie');
+    if (st) {
+        if (jours > 30)     { st.textContent = '✅ Garantie valide — ' + jours + ' jours restants'; st.className = 'payment-status paid'; }
+        else if (jours > 0) { st.textContent = '⚠ Expire bientôt — ' + jours + ' jours restants'; st.className = 'payment-status unpaid'; }
+        else                { st.textContent = '❌ Garantie EXPIRÉE'; st.className = 'payment-status unpaid'; }
+    }
+}
+
+
+function majExtPaiement() {
+    var prix  = parseFloat(document.getElementById('g_ext_prix').value)  || 0;
+    var verse = parseFloat(document.getElementById('g_ext_verse').value) || 0;
+    var dev   = document.getElementById('g_ext_devise').value;
+    var reste = prix - verse;
+    var div   = document.getElementById('ext_paiement_statut');
+    if (!div) return;
+    if (prix === 0) {
+        div.textContent = 'RESTE EXT : 0.00';
+        div.className = 'payment-status neutral';
+    } else if (reste <= 0) {
+        div.textContent = 'EXTENSION PAYÉE';
+        div.className = 'payment-status paid';
+    } else {
+        div.textContent = 'RESTE EXT : ' + reste.toFixed(2) + ' ' + dev;
+        div.className = 'payment-status unpaid';
+    }
+}
+
+function getRetardInfo(item) {
+    const reste = (parseFloat(item.prix)||0) - (parseFloat(item.verse)||0);
+    if(reste <= 0) return { texte: 'Paye', classe: 'td-retard-ok', jours: 0 };
+    if(!item.echeance) return { texte: '---', classe: 'td-retard-ok', jours: 0 };
+    const j = Math.ceil((new Date() - new Date(item.echeance)) / 86400000);
+    if(j < 0) return { texte: 'Ech. dans ' + Math.abs(j) + 'j', classe: 'td-retard-warn', jours: j };
+    if(j === 0) return { texte: "Auj. echeance", classe: 'td-retard-warn', jours: 0 };
+    return { texte: j + 'j de retard', classe: 'td-retard-late', jours: j };
+}
+
+function sauvegarder() {
+    const nom = document.getElementById('c_nom').value.trim();
+    const sn  = document.getElementById('p_sn').value.trim();
+    if(!nom) { showToast('⚠️ Nom obligatoire', 'error'); return; }
+    if(!sn)  { showToast('⚠️ N° de Série obligatoire', 'error'); return; }
+    // Validation : échéance ne peut pas être avant la date d'achat
+    const echeanceSave = document.getElementById('f_echeance').value;
+    const dateAchatSave = document.getElementById('c_date').value;
+    if(echeanceSave && dateAchatSave && echeanceSave < dateAchatSave) {
+        showToast("⚠️ L'échéance ne peut pas être avant la date d'achat !", 'error');
+        return;
+    }
+    // Validation : date fin garantie >= date achat
+    const dateAchat = document.getElementById('c_date').value;
+    var extTog2 = document.getElementById('extToggle');
+    const extOpt2 = extTog2 && extTog2.classList.contains('on') ? 'Oui' : 'Non';
+    const finGarCheck = extOpt2 === 'Oui' ? document.getElementById('g_end_ext').value : document.getElementById('g_end_std').value;
+    if(finGarCheck && dateAchat && finGarCheck < dateAchat) {
+        showToast("⚠️ La date de fin garantie ne peut pas être avant la date d'achat !", 'error');
+        return;
+    }
+    const editId = document.getElementById('edit-id').value;
+    const id = editId || String(Date.now());
+    const prix  = parseFloat(document.getElementById('f_prix').value)  || 0;
+    const verse = parseFloat(document.getElementById('f_verse').value) || 0;
+    var extTog  = document.getElementById('extToggle');
+    var extFact = document.getElementById('extFactToggle');
+    const extOpt  = extTog  && extTog.classList.contains('on')  ? 'Oui' : 'Non';
+    const factOpt = extFact && extFact.classList.contains('on') ? 'Oui' : 'Non';
+    const finGar = extOpt === 'Oui' ? document.getElementById('g_end_ext').value : document.getElementById('g_end_std').value;
+    const item = {
+        id, client: nom,
+        adresse: document.getElementById('c_adr').value.trim(),
+        indicatif: document.getElementById('c_indicatif').value,
+        tel: document.getElementById('c_tel').value.trim(),
+        date: document.getElementById('c_date').value,
+        type: document.getElementById('p_type').value,
+        categorie: document.getElementById('p_cat').value,
+        marque: document.getElementById('p_marque').value.trim(),
+        modele: document.getElementById('p_mod').value.trim(),
+        sn, notes: document.getElementById('p_notes').value.trim(),
+        taille: document.getElementById('p_taille') ? document.getElementById('p_taille').value.trim() : '',
+        serie:  document.getElementById('p_serie')  ? document.getElementById('p_serie').value.trim()  : '',
+        devise: document.getElementById('f_devise').value,
+        prix, verse,
+        echeance: document.getElementById('f_echeance').value,
+        fin_garantie: finGar,
+        gar_start:  document.getElementById('g_start_std').value,
+        gar_std:    document.getElementById('g_std').value,
+        gar_ext:    extOpt === 'Oui' ? document.getElementById('g_ext_mois').value : 0,
+        ext_fact:   factOpt,
+        ext_prix:   factOpt === 'Oui' ? (parseFloat(document.getElementById('g_ext_prix').value)  || 0) : 0,
+        ext_verse:  factOpt === 'Oui' ? (parseFloat(document.getElementById('g_ext_verse').value) || 0) : 0,
+        ext_devise: document.getElementById('g_ext_devise').value,
+        created_at: editId ? (db.find(x => x.id == editId)?.created_at || id) : id,
+        updated_at: String(Date.now())
+    };
+    const idx = db.findIndex(x => x.id == id);
+    if(idx > -1) db[idx] = item; else db.push(item);
+    localStorage.setItem('garantie_db_v4', JSON.stringify(db));
+    showToast(editId ? '✅ Dossier modifié !' : '✅ Dossier enregistré !', 'success');
+    // Sync Firebase
+    sauvegarderFirebase(item);
+    viderFormulaire();
+    syncCloud(item);
+}
+
+function modifierDossier(id) {
+    const item = db.find(x => x.id == id);
+    if(!item) return;
+    document.getElementById('edit-id').value = id;
+    document.getElementById('c_nom').value = item.client || '';
+    document.getElementById('c_adr').value = item.adresse || '';
+    document.getElementById('c_indicatif').value = item.indicatif || '+41';
+    document.getElementById('c_tel').value = item.tel || '';
+    document.getElementById('c_date').value = item.date || today();
+    majDateVenteDisplay();
+    document.getElementById('p_type').value = item.type || 'TV';
+    updateCategories();
+    setTimeout(() => { document.getElementById('p_cat').value = item.categorie || ''; }, 50);
+    document.getElementById('p_marque').value = item.marque || '';
+    var tEl = document.getElementById('p_taille');
+    var sEl = document.getElementById('p_serie');
+    if (tEl) tEl.value = item.taille || '';
+    if (sEl) sEl.value = item.serie  || '';
+    document.getElementById('p_mod').value = item.modele || '';
+    document.getElementById('p_sn').value = item.sn || '';
+    document.getElementById('p_notes').value = item.notes || '';
+    document.getElementById('f_devise').value = item.devise || 'CHF';
+    document.getElementById('f_prix').value = item.prix || '';
+    document.getElementById('f_verse').value = item.verse || '';
+    document.getElementById('f_echeance').value = item.echeance || '';
+    majEcheanceDisplay();
+    document.getElementById('g_std').value = item.gar_std || 12;
+    // Restaurer toggle extension
+    if (item.gar_ext > 0) {
+        document.getElementById('g_ext_mois').value = item.gar_ext;
+        var extTM = document.getElementById('extToggle');
+        if (extTM && !extTM.classList.contains('on')) toggleExtension();
+    }
+    // Restaurer toggle facturable
+    if (item.ext_fact === 'Oui') {
+        var ftM = document.getElementById('extFactToggle');
+        if (ftM && !ftM.classList.contains('on')) toggleExtFact();
+        var epEl = document.getElementById('g_ext_prix');
+        var evEl = document.getElementById('g_ext_verse');
+        var edEl = document.getElementById('g_ext_devise');
+        if (epEl) epEl.value = item.ext_prix  || '';
+        if (evEl) evEl.value = item.ext_verse || '';
+        if (edEl) edEl.value = item.ext_devise || 'CHF';
+        majExtPaiement();
+    }
+    // Restaurer facturation extension
+    var epEl = document.getElementById('g_ext_prix');
+    var evEl = document.getElementById('g_ext_verse');
+    var edEl = document.getElementById('g_ext_devise');
+    if (epEl) epEl.value = item.ext_prix  || '';
+    if (evEl) evEl.value = item.ext_verse || '';
+    if (edEl) edEl.value = item.ext_devise || 'CHF';
+    majPaiement();
+    majExtPaiement();
+    calculerDatesGarantie();
+    // Restaurer date debut garantie si personnalisée
+    if (item.gar_start && item.gar_start !== item.date) {
+        var startEl = document.getElementById('g_start_std');
+        var sdMod   = document.getElementById('g_start_std_display');
+        if (startEl) startEl.value = item.gar_start;
+        if (sdMod)   sdMod.textContent = '📅 ' + formatDate(item.gar_start);
+        majStartGarantie();
+    }
+    document.getElementById('edit-client-name').textContent = item.client;
+    document.getElementById('edit-banner').classList.add('visible');
+    switchTabById('saisie');
+    showToast('✏️ Modification en cours — ' + (item ? item.client : ''), 'success');
+}
+
+function supprimer(id) {
+    if(!confirm('Supprimer ce dossier ?')) return;
+    db = db.filter(x => x.id != id);
+    localStorage.setItem('garantie_db_v4', JSON.stringify(db));
+    supprimerFirebase(id);
+    showToast('🗑️ Dossier supprimé', 'error');
+    chargerHistorique();
+}
+
+function viderFormulaire() {
+    ['c_nom','c_adr','c_tel','p_marque','p_mod','p_sn','p_notes','f_prix','f_verse','f_echeance'].forEach(id => {
+        document.getElementById(id).value = '';
+    });
+    document.getElementById('edit-id').value = '';
+    document.getElementById('c_date').value = today();
+    majDateVenteDisplay();
+    document.getElementById('p_type').value = 'TV';
+    var tEl2 = document.getElementById('p_taille');
+    var sEl2 = document.getElementById('p_serie');
+    if (tEl2) tEl2.value = '';
+    if (sEl2) sEl2.value = '';
+    document.getElementById('f_devise').value = 'CHF';
+    document.getElementById('c_indicatif').value = '+41';
+    document.getElementById('g_std').value = '12';
+    document.getElementById('g_start_std').value = '';
+    var ssd = document.getElementById('g_start_std_display');
+    if (ssd) ssd.textContent = '—';
+    // Reset toggle extension
+    var extTv = document.getElementById('extToggle');
+    if (extTv && extTv.classList.contains('on')) toggleExtension();
+    var ftV = document.getElementById('extFactToggle');
+    if (ftV && ftV.classList.contains('on')) toggleExtFact();
+    document.getElementById('edit-banner').classList.remove('visible');
+    const s = document.getElementById('gar_status_saisie');
+    if(s) { s.textContent = '--- jours restants'; s.className = 'payment-status neutral'; }
+    const r = document.getElementById('f_retard');
+    if(r) { r.value = ''; r.style.background = '#f1f5f9'; r.style.color = 'var(--muted)'; }
+    updateCategories();
+    majPaiement();
+    calculerDatesGarantie();
+    var epV = document.getElementById('g_ext_prix');
+    var evV = document.getElementById('g_ext_verse');
+    if (epV) epV.value = '';
+    if (evV) evV.value = '';
+    var esV = document.getElementById('ext_paiement_statut');
+    if (esV) { esV.textContent = 'RESTE EXT : 0.00'; esV.className = 'payment-status neutral'; }
+    var sdV = document.getElementById('g_start_std_display');
+    if (sdV) sdV.textContent = '📅 —';
+}
+
+function chargerHistorique() {
+    const search = (document.getElementById('search_input').value || '').toLowerCase();
+    const filterType   = document.getElementById('filter_type').value;
+    const filterStatus = document.getElementById('filter_status').value;
+    const filterPaie   = document.getElementById('filter_paiement').value;
+
+    let data = [...db].sort((a,b) => b.updated_at - a.updated_at);
+    if(search) data = data.filter(x =>
+        (x.client||'').toLowerCase().includes(search) ||
+        (x.modele||'').toLowerCase().includes(search) ||
+        (x.sn||'').toLowerCase().includes(search) ||
+        (x.marque||'').toLowerCase().includes(search)
+    );
+    if(filterType) data = data.filter(x => x.type === filterType);
+    if(filterStatus) data = data.filter(x => {
+        const j = Math.ceil((new Date(x.fin_garantie) - new Date()) / 86400000);
+        if(filterStatus === 'ok')   return j > 30;
+        if(filterStatus === 'soon') return j > 0 && j <= 30;
+        if(filterStatus === 'exp')  return j <= 0;
+    });
+    if(filterPaie) data = data.filter(x => {
+        const reste = (parseFloat(x.prix)||0) - (parseFloat(x.verse)||0);
+        const ri = getRetardInfo(x);
+        if(filterPaie === 'paye')    return reste <= 0;
+        if(filterPaie === 'attente') return reste > 0;
+        if(filterPaie === 'retard')  return ri.jours > 0;
+    });
+
+    const ca = db.reduce((s,x) => s + (parseFloat(x.prix)||0), 0);
+    const actives = db.filter(x => Math.ceil((new Date(x.fin_garantie) - new Date())/86400000) > 0).length;
+    const dev = db[0]?.devise || 'CHF';
+    document.getElementById('stats_bar').innerHTML =
+        `<div class="stat-box"><div class="stat-icon">📁</div><div class="stat-num">${db.length}</div><div class="stat-lbl">Dossiers</div></div>` +
+        `<div class="stat-box"><div class="stat-icon">🛡️</div><div class="stat-num">${actives}</div><div class="stat-lbl">Garanties actives</div></div>` +
+        `<div class="stat-box"><div class="stat-icon">💰</div><div class="stat-num" style="font-size:1rem">${ca.toFixed(0)}</div><div class="stat-lbl">${dev} Total</div></div>`;
+
+    const container = document.getElementById('hist_cards');
+    const empty = document.getElementById('empty_state');
+    if(data.length === 0) { container.innerHTML = ''; empty.style.display = 'block'; return; }
+    empty.style.display = 'none';
+
+    const typeEmoji = {TV:'📺',PC:'💻',Imprimante:'🖨️',Telephone:'📱',Tablette:'📱',Accessoire:'🔌',Autre:'📦'};
+    container.innerHTML = data.map(item => {
+        const jours = Math.ceil((new Date(item.fin_garantie) - new Date()) / 86400000);
+        let garBadge, garColor;
+        if(jours <= 0)       { garBadge = 'Expirée';    garColor = 'var(--danger)';  }
+        else if(jours <= 30) { garBadge = jours+'j';     garColor = 'var(--warning)'; }
+        else                 { garBadge = 'Active';      garColor = 'var(--success)'; }
+        const reste = (parseFloat(item.prix)||0) - (parseFloat(item.verse)||0);
+        const ri = getRetardInfo(item);
+        const paiColor = reste <= 0 ? 'var(--success)' : 'var(--danger)';
+        const paiText  = reste <= 0 ? '✓ Payé' : '-'+reste.toFixed(0)+' '+(item.devise||'');
+        return `<div class="hist-card">
+            <div class="hist-card-top">
+                <div class="hist-card-avatar">${typeEmoji[item.type]||'📦'}</div>
+                <div class="hist-card-info">
+                    <div class="hist-card-name">${item.client}</div>
+                    <div class="hist-card-sub">${item.marque||''} ${item.modele||''} ${item.sn ? '· '+item.sn : ''}</div>
+                </div>
+                <div class="hist-card-actions">
+                    <button class="hist-btn" onclick="modifierDossier('${item.id}')">✏️</button>
+                    <button class="hist-btn del" onclick="supprimer('${item.id}')">🗑️</button>
+                </div>
+            </div>
+            <div class="hist-card-bottom">
+                <span style="font-size:.72rem;font-weight:600;color:${garColor}">🛡 ${garBadge}</span>
+                <span style="font-size:.72rem;color:var(--muted)">${formatDate(item.fin_garantie)}</span>
+                <span style="font-size:.72rem;font-weight:600;color:${paiColor}">${paiText}</span>
+                ${ri.jours > 0 ? `<span style="font-size:.72rem;color:var(--danger)">⚠ ${ri.texte}</span>` : ''}
+            </div>
+        </div>`;
+    }).join('');
+}
+
+function rechercherGarantie() {
+    const q = (document.getElementById('gar_search').value || '').toLowerCase().trim();
+    const container = document.getElementById('gar_results');
+    if(q.length < 2) { container.innerHTML = ''; return; }
+    const resultats = db.filter(x =>
+        (x.client||'').toLowerCase().includes(q) ||
+        (x.sn||'').toLowerCase().includes(q) ||
+        (x.tel||'').toLowerCase().includes(q)
+    );
+    if(resultats.length === 0) {
+        container.innerHTML = '<div class="card" style="text-align:center;padding:30px;color:var(--muted)"><div style="font-size:2.5rem;margin-bottom:8px">&#128269;</div><div style="font-weight:600">Aucun r&eacute;sultat</div></div>';
+        return;
+    }
+    container.innerHTML = resultats.map(item => {
+        const jours = Math.ceil((new Date(item.fin_garantie) - new Date()) / 86400000);
+        const expire = jours <= 0;
+        const bientot = jours > 0 && jours <= 30;
+        let bg, col, txt;
+        if(expire)      { bg='#fee2e2'; col='#991b1b'; txt='GARANTIE EXPIREE'; }
+        else if(bientot){ bg='#fef3c7'; col='#92400e'; txt='EXPIRE DANS '+jours+' JOURS'; }
+        else            { bg='#dcfce7'; col='#166534'; txt='SOUS GARANTIE - '+jours+' jours restants'; }
+        const ri = getRetardInfo(item);
+        const reste = (parseFloat(item.prix)||0) - (parseFloat(item.verse)||0);
+        return '<div class="card" style="border-left:4px solid '+col+';margin-bottom:12px">' +
+            '<div style="background:'+bg+';color:'+col+';border-radius:8px;padding:12px 16px;text-align:center;font-weight:800;font-size:0.95rem;margin-bottom:14px">' + txt + '</div>' +
+            '<div class="section-title">Client</div>' +
+            '<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:14px;font-size:0.82rem">' +
+                '<div><span style="color:var(--muted);font-size:0.68rem;display:block">NOM</span><strong>'+item.client+'</strong></div>' +
+                '<div><span style="color:var(--muted);font-size:0.68rem;display:block">TEL</span>'+(item.indicatif||'')+' '+(item.tel||'---')+'</div>' +
+            '</div>' +
+            '<div class="section-title">Produit</div>' +
+            '<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:14px;font-size:0.82rem">' +
+                '<div><span style="color:var(--muted);font-size:0.68rem;display:block">MODELE</span><strong>'+(item.marque||'')+' '+(item.modele||'')+'</strong></div>' +
+                '<div><span style="color:var(--muted);font-size:0.68rem;display:block">S/N</span><span style="font-family:monospace;font-size:0.75rem">'+item.sn+'</span></div>' +
+                '<div><span style="color:var(--muted);font-size:0.68rem;display:block">VENTE</span>'+formatDate(item.date)+'</div>' +
+                '<div><span style="color:var(--muted);font-size:0.68rem;display:block">FIN GAR.</span><strong>'+formatDate(item.fin_garantie)+'</strong></div>' +
+            '</div>' +
+            '<div style="border-top:1px solid var(--border);padding-top:10px;display:flex;justify-content:space-between;font-size:0.8rem">' +
+                '<span style="color:var(--muted)">Paiement :</span>' +
+                (reste <= 0 ? '<span style="color:#166534;font-weight:700">Paye</span>' : '<span style="color:#991b1b;font-weight:700">Reste '+reste.toFixed(2)+' '+(item.devise||'')+'</span>') +
+            '</div>' +
+            (ri.jours > 0 ? '<div style="background:#fee2e2;border-radius:6px;padding:8px;margin-top:8px;text-align:center;font-size:0.78rem;font-weight:700;color:#991b1b">Retard paiement : '+ri.texte+'</div>' : '') +
+        '</div>';
+    }).join('');
+}
+
+// DASHBOARD
+function setPeriod(period, btn) {
+    dashPeriod = period;
+    document.querySelectorAll('.period-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    renderDashboard();
+}
+
+function filtrerParPeriode(data) {
+    const now = new Date();
+    return data.filter(x => {
+        if(!x.date) return false;
+        const d = new Date(x.date);
+        if(dashPeriod === 'month')   return d.getMonth() === now.getMonth() && d.getFullYear() === now.getFullYear();
+        if(dashPeriod === 'quarter') { const diff = (now.getFullYear()-d.getFullYear())*12+(now.getMonth()-d.getMonth()); return diff >= 0 && diff < 3; }
+        if(dashPeriod === 'year')    return d.getFullYear() === now.getFullYear();
+        return true;
+    });
+}
+
+function renderDashboard() {
+    const data  = filtrerParPeriode(db);
+    const devise = db[0]?.devise || 'CHF';
+    const ca    = data.reduce((s,x) => s + (parseFloat(x.prix)||0), 0);
+    const verse = data.reduce((s,x) => s + (parseFloat(x.verse)||0), 0);
+    const restTotal = data.reduce((s,x) => { const r=(parseFloat(x.prix)||0)-(parseFloat(x.verse)||0); return s+(r>0?r:0); }, 0);
+    const sousGar   = db.filter(x => Math.ceil((new Date(x.fin_garantie)-new Date())/86400000)>0).length;
+    const taux      = ca > 0 ? Math.round((verse/ca)*100) : 0;
+
+    document.getElementById('dash_kpis').innerHTML = [
+        {icon:'&#128176;', value: ca.toFixed(0)+' '+devise, label:"Chiffre d'affaires", sub: data.length+' vente(s)', color:'#3b82f6'},
+        {icon:'&#10003;',  value: taux+'%', label:'Taux Encaissement', sub: verse.toFixed(0)+' '+devise+' encaisses', color:'#10b981'},
+        {icon:'&#8987;',   value: restTotal.toFixed(0)+' '+devise, label:'Reste a Encaisser', sub: data.filter(x=>(parseFloat(x.prix)||0)-(parseFloat(x.verse)||0)>0).length+' dossier(s)', color:'#ef4444'},
+        {icon:'&#128737;', value: sousGar, label:'Sous Garantie', sub:'sur '+db.length+' dossiers', color:'#f59e0b'},
+    ].map(k => '<div class="kpi-card" style="--kpi-color:'+k.color+'"><div class="kpi-icon">'+k.icon+'</div><div class="kpi-value">'+k.value+'</div><div class="kpi-label">'+k.label+'</div><div class="kpi-sub">'+k.sub+'</div></div>').join('');
+
+    const typeColors = {TV:'#3b82f6',PC:'#8b5cf6',Imprimante:'#06b6d4',Telephone:'#10b981',Tablette:'#f59e0b',Accessoire:'#f97316',Autre:'#94a3b8'};
+    const counts = {};
+    data.forEach(x => { counts[x.type] = (counts[x.type]||0)+1; });
+    const maxC = Math.max(...Object.values(counts), 1);
+    document.getElementById('dash_bar_types').innerHTML = Object.entries(counts).sort((a,b)=>b[1]-a[1]).map(([t,c]) =>
+        '<div class="bar-row"><div class="bar-label">'+t+'</div><div class="bar-wrap"><div class="bar-fill" style="width:'+Math.round(c/maxC*100)+'%;background:'+(typeColors[t]||'#94a3b8')+'"></div></div><div class="bar-val">'+c+'</div></div>'
+    ).join('') || '<div style="text-align:center;color:var(--muted);font-size:0.8rem;padding:20px">Aucune donn&eacute;e</div>';
+
+    const expiring = db.map(x => ({...x, jours:Math.ceil((new Date(x.fin_garantie)-new Date())/86400000)})).filter(x=>x.jours>0&&x.jours<=30).sort((a,b)=>a.jours-b.jours);
+    document.getElementById('dash_expiring').innerHTML = expiring.length === 0
+        ? '<div style="text-align:center;color:var(--muted);font-size:0.8rem;padding:16px">Aucune garantie n\'expire dans 30 jours</div>'
+        : expiring.map(x => '<div class="list-item"><div><div style="font-weight:600">'+x.client+'</div><div style="color:var(--muted);font-size:0.7rem">'+x.marque+' '+x.modele+' - '+x.sn+'</div></div><span class="badge badge-soon">'+x.jours+'j</span></div>').join('');
+
+    const pending = data.filter(x=>(parseFloat(x.prix)||0)-(parseFloat(x.verse)||0)>0).sort((a,b)=>((parseFloat(b.prix)||0)-(parseFloat(b.verse)||0))-((parseFloat(a.prix)||0)-(parseFloat(a.verse)||0)));
+    const totPend = pending.reduce((s,x)=>s+((parseFloat(x.prix)||0)-(parseFloat(x.verse)||0)),0);
+    document.getElementById('dash_pending').innerHTML = pending.length === 0
+        ? '<div style="text-align:center;color:var(--muted);font-size:0.8rem;padding:16px">Tous les paiements sont a jour !</div>'
+        : '<div style="background:#fee2e2;border-radius:8px;padding:10px 14px;margin-bottom:10px;display:flex;justify-content:space-between"><span style="font-size:0.75rem;color:#991b1b;font-weight:600">Total en attente</span><span style="font-family:monospace;font-weight:800;color:#991b1b">'+totPend.toFixed(2)+' '+devise+'</span></div>' +
+          pending.map(x => { const r=(parseFloat(x.prix)||0)-(parseFloat(x.verse)||0); return '<div class="list-item"><div><div style="font-weight:600">'+x.client+'</div><div style="color:var(--muted);font-size:0.7rem">'+x.modele+' — '+formatDate(x.date)+'</div></div><span style="font-family:monospace;font-weight:700;color:#ef4444">'+r.toFixed(2)+' '+(x.devise||devise)+'</span></div>'; }).join('');
+
+    const retards = db.filter(x => { const ri=getRetardInfo(x); return ri.jours > 0; }).sort((a,b)=>getRetardInfo(b).jours-getRetardInfo(a).jours);
+    document.getElementById('dash_retards').innerHTML = retards.length === 0
+        ? '<div style="text-align:center;color:var(--muted);font-size:0.8rem;padding:16px">Aucun retard de paiement !</div>'
+        : retards.map(x => { const ri=getRetardInfo(x); const r=(parseFloat(x.prix)||0)-(parseFloat(x.verse)||0); return '<div class="list-item"><div><div style="font-weight:600">'+x.client+'</div><div style="color:var(--muted);font-size:0.7rem">'+x.modele+' - Ech: '+(x.echeance||'---')+'</div></div><div style="text-align:right"><span style="color:#991b1b;font-weight:700;font-size:0.78rem">'+ri.texte+'</span><div style="font-size:0.7rem;color:var(--muted)">'+r.toFixed(2)+' '+(x.devise||devise)+'</div></div></div>'; }).join('');
+}
+
+function exporterJSON() {
+    dl(new Blob([JSON.stringify(db,null,2)],{type:'application/json'}), 'SET_backup_'+todayTime()+'.json');
+    showToast('Export JSON OK', 'success');
+}
+function exporterCSV() {
+    const h = ['ID','Client','Adresse','Tel','Date','Type','Categorie','Marque','Modele','SN','Notes','Devise','Prix','Verse','Echeance','Fin Garantie'];
+    const rows = db.map(x => [x.id,x.client,x.adresse,(x.indicatif||'')+(x.tel||''),x.date,x.type,x.categorie,x.marque,x.modele,x.sn,x.notes,x.devise,x.prix,x.verse,x.echeance,x.fin_garantie].map(v=>'"'+String(v||'').replace(/"/g,'""')+'"').join(','));
+    dl(new Blob(['\uFEFF'+[h.join(','),...rows].join('\n')],{type:'text/csv;charset=utf-8;'}), 'export_'+today()+'.csv');
+    showToast('Export CSV pret pour Excel !', 'success');
+}
+function dl(blob, filename) {
+    try {
+        const url = URL.createObjectURL(blob);
+        // Safari iOS : window.open est le seul moyen fiable
+        var isSafari = /^((?!chrome|android).)*safari/i.test(navigator.userAgent);
+        if (isSafari) {
+            window.open(url, '_blank');
+            setTimeout(() => URL.revokeObjectURL(url), 5000);
+        } else {
+            const a = document.createElement('a');
+            a.href = url; a.download = filename;
+            a.style.display = 'none';
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            setTimeout(() => URL.revokeObjectURL(url), 2000);
+        }
+    } catch(e) {
+        showToast('Erreur export : ' + e.message, 'error');
+    }
+}
+function importerDonnees(event) {
+    const file = event.target.files[0]; if(!file) return;
+    const reader = new FileReader();
+    reader.onload = e => {
+        try {
+            db = JSON.parse(e.target.result);
+            if(!Array.isArray(db)) throw new Error();
+            localStorage.setItem('garantie_db_v4', JSON.stringify(db));
+            majStatsAccueil();
+            showToast(db.length + ' dossiers restaurés !', 'success');
+            document.getElementById('importFile').value = '';
+            // Sync vers Firebase si connecté
+            if (firebaseOK && fbToken) {
+                showToast('☁️ Envoi vers Firebase...', '');
+                (async () => {
+                    for (const item of db) await sauvegarderFirebase(item);
+                    showToast('✅ ' + db.length + ' dossiers synchronisés !', 'success');
+                    majStatutFirebase(true);
+                })();
+            }
+        } catch { showToast('Fichier invalide', 'error'); }
+    };
+    reader.readAsText(file);
+}
+function effacerTout() {
+    if(!confirm('ATTENTION : toutes les donnees seront supprimees. Continuer ?')) return;
+    db = []; localStorage.removeItem('garantie_db_v4');
+    showToast('Donnees effacees', 'error');
+}
+// sauvegarderCloudURL supprimee (cloud_url absent du HTML)
+async function syncCloud(item) {
+    const url = localStorage.getItem('cloud_url'); if(!url) return;
+    try { await fetch(url, { method:'POST', mode:'no-cors', headers:{'Content-Type':'application/json'}, body: JSON.stringify(item) }); } catch(e) {}
+}
+// ── Affichage date échéance ──
+function majEcheanceDisplay() {
+    const val = document.getElementById('f_echeance').value;
+    const display = document.getElementById('f_echeance_display');
+    if(display) display.textContent = val ? '📅 ' + formatDate(val) : '📅 —';
+}
+
+// ── Export Excel XLSX (sans librairie externe) ──
+// Génère un vrai .xlsx via OpenXML + JSZip-like inline
+
+// ── Mini générateur XLSX inline ──
+const XLSXMini = {
+    // Escape XML
+    esc: s => String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'),
+
+    // Convertir valeur en cellule XML
+    cell: (val, col, row) => {
+        const ref = col + row;
+        if(val === null || val === undefined || val === '') return `<c r="${ref}"/>`;
+        if(typeof val === 'number') return `<c r="${ref}" t="n"><v>${val}</v></c>`;
+        return `<c r="${ref}" t="inlineStr"><is><t>${XLSXMini.esc(val)}</t></is></c>`;
+    },
+
+    // Lettre de colonne (0=A, 1=B, ...)
+    col: n => {
+        let s = '';
+        n++;
+        while(n > 0) { s = String.fromCharCode(64 + (n % 26 || 26)) + s; n = Math.floor((n-1)/26); }
+        return s;
+    },
+
+    // Générer le XML d'une feuille
+    sheet: (data) => {
+        let rows = '';
+        data.forEach((row, ri) => {
+            let cells = '';
+            row.forEach((val, ci) => { cells += XLSXMini.cell(val, XLSXMini.col(ci), ri+1); });
+            rows += `<row r="${ri+1}">${cells}</row>`;
+        });
+        return `<?xml version="1.0" encoding="UTF-8"?>
+<worksheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main">
+<sheetData>${rows}</sheetData></worksheet>`;
+    },
+
+    // Assembler le .xlsx (ZIP simplifié)
+    build: (sheets) => {
+        // sheets = [{name, data}]
+        const files = {};
+
+        // [Content_Types].xml
+        let ctypes = `<?xml version="1.0" encoding="UTF-8"?>
+<Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types">
+<Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/>
+<Default Extension="xml" ContentType="application/xml"/>
+<Override PartName="/xl/workbook.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet.main+xml"/>`;
+        sheets.forEach((s,i) => {
+            ctypes += `<Override PartName="/xl/worksheets/sheet${i+1}.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.worksheet+xml"/>`;
+        });
+        ctypes += `</Types>`;
+        files['[Content_Types].xml'] = ctypes;
+
+        // _rels/.rels
+        files['_rels/.rels'] = `<?xml version="1.0" encoding="UTF-8"?>
+<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">
+<Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/officeDocument" Target="xl/workbook.xml"/>
+</Relationships>`;
+
+        // xl/workbook.xml
+        let wbSheets = sheets.map((s,i) => `<sheet name="${XLSXMini.esc(s.name)}" sheetId="${i+1}" r:id="rId${i+1}"/>`).join('');
+        files['xl/workbook.xml'] = `<?xml version="1.0" encoding="UTF-8"?>
+<workbook xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main"
+          xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships">
+<sheets>${wbSheets}</sheets></workbook>`;
+
+        // xl/_rels/workbook.xml.rels
+        let wbRels = sheets.map((s,i) => `<Relationship Id="rId${i+1}" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/worksheet" Target="worksheets/sheet${i+1}.xml"/>`).join('');
+        files['xl/_rels/workbook.xml.rels'] = `<?xml version="1.0" encoding="UTF-8"?>
+<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">
+${wbRels}</Relationships>`;
+
+        // Feuilles
+        sheets.forEach((s,i) => {
+            files[`xl/worksheets/sheet${i+1}.xml`] = XLSXMini.sheet(s.data);
+        });
+
+        return XLSXMini.zip(files);
+    },
+
+    // Mini ZIP writer (store, pas de compression)
+    zip: (files) => {
+        const enc = new TextEncoder();
+        const parts = [];
+        const centralDir = [];
+        let offset = 0;
+
+        for(const [name, content] of Object.entries(files)) {
+            const nameBytes    = enc.encode(name);
+            const contentBytes = enc.encode(content);
+            const crc = XLSXMini.crc32(contentBytes);
+            const size = contentBytes.length;
+
+            // Local file header
+            const local = new Uint8Array(30 + nameBytes.length + size);
+            const dv = new DataView(local.buffer);
+            dv.setUint32(0, 0x04034b50, true);  // sig
+            dv.setUint16(4, 20, true);            // version
+            dv.setUint16(6, 0, true);             // flags
+            dv.setUint16(8, 0, true);             // compression (store)
+            dv.setUint16(10, 0, true);            // mod time
+            dv.setUint16(12, 0, true);            // mod date
+            dv.setUint32(14, crc, true);          // crc32
+            dv.setUint32(18, size, true);         // compressed size
+            dv.setUint32(22, size, true);         // uncompressed size
+            dv.setUint16(26, nameBytes.length, true);
+            dv.setUint16(28, 0, true);
+            local.set(nameBytes, 30);
+            local.set(contentBytes, 30 + nameBytes.length);
+            parts.push(local);
+
+            // Central directory entry
+            const cd = new Uint8Array(46 + nameBytes.length);
+            const dv2 = new DataView(cd.buffer);
+            dv2.setUint32(0, 0x02014b50, true);
+            dv2.setUint16(4, 20, true);
+            dv2.setUint16(6, 20, true);
+            dv2.setUint16(8, 0, true);
+            dv2.setUint16(10, 0, true);
+            dv2.setUint16(12, 0, true);
+            dv2.setUint16(14, 0, true);
+            dv2.setUint32(16, crc, true);
+            dv2.setUint32(20, size, true);
+            dv2.setUint32(24, size, true);
+            dv2.setUint16(28, nameBytes.length, true);
+            dv2.setUint16(30, 0, true);
+            dv2.setUint16(32, 0, true);
+            dv2.setUint16(34, 0, true);
+            dv2.setUint16(36, 0, true);
+            dv2.setUint32(38, 0, true);
+            dv2.setUint32(42, offset, true);
+            cd.set(nameBytes, 46);
+            centralDir.push(cd);
+
+            offset += local.length;
+        }
+
+        const cdBytes   = XLSXMini.concat(centralDir);
+        const eocd      = new Uint8Array(22);
+        const dvEocd    = new DataView(eocd.buffer);
+        dvEocd.setUint32(0, 0x06054b50, true);
+        dvEocd.setUint16(4, 0, true);
+        dvEocd.setUint16(6, 0, true);
+        dvEocd.setUint16(8, centralDir.length, true);
+        dvEocd.setUint16(10, centralDir.length, true);
+        dvEocd.setUint32(12, cdBytes.length, true);
+        dvEocd.setUint32(16, offset, true);
+        dvEocd.setUint16(20, 0, true);
+
+        return XLSXMini.concat([...parts, cdBytes, eocd]);
+    },
+
+    concat: (arrays) => {
+        const total = arrays.reduce((s,a) => s+a.length, 0);
+        const out = new Uint8Array(total);
+        let off = 0;
+        arrays.forEach(a => { out.set(a, off); off += a.length; });
+        return out;
+    },
+
+    // CRC32
+    crc32: (bytes) => {
+        let crc = -1;
+        for(let i=0; i<bytes.length; i++) {
+            crc ^= bytes[i];
+            for(let j=0; j<8; j++) crc = (crc>>>1)^(crc&1 ? 0xEDB88320 : 0);
+        }
+        return (crc^-1)>>>0;
+    },
+
+    // Télécharger
+    save: (sheets, filename) => {
+        const bytes = XLSXMini.build(sheets);
+        const blob  = new Blob([bytes], {type:'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'});
+        dl(blob, filename);
+    }
+};
+
+function exporterExcel() {
+    if(!db || db.length === 0) { showToast('❌ Aucune donnée à exporter', 'error'); return; }
+    const headers = ['ID','Client','Adresse','Téléphone','Date Vente','Type','Catégorie',
+                     'Marque','Modèle','N° Série','Notes','Devise','Prix Total',
+                     'Acompte Versé','Reste à Payer','Échéance Paiement',
+                     'Garantie (mois)','Extension Garantie (mois)',
+                     'Fin Garantie','Statut Paiement','Créé le'];
+    const today2 = new Date();
+    const rows = db.map(x => {
+        const reste  = (parseFloat(x.prix)||0) - (parseFloat(x.verse)||0);
+        const statut = reste <= 0 ? 'Soldé' : (x.echeance && new Date(x.echeance) < today2 ? 'En retard' : 'En attente');
+        return [x.id, x.client||'', x.adresse||'', (x.indicatif||'')+(x.tel||''),
+                x.date ? formatDate(x.date) : '', x.type||'', x.categorie||'',
+                x.marque||'', x.modele||'', x.sn||'', x.notes||'', x.devise||'CHF',
+                parseFloat(x.prix)||0, parseFloat(x.verse)||0, reste > 0 ? reste : 0,
+                x.echeance ? formatDate(x.echeance) : '',
+                parseInt(x.gar_std)||12, parseInt(x.gar_ext)||0,
+                x.fin_garantie ? formatDate(x.fin_garantie) : '',
+                statut, x.created_at ? formatDate(x.created_at.substring(0,10)) : ''];
+    });
+    const totalCA    = db.reduce((s,x) => s+(parseFloat(x.prix)||0), 0);
+    const totalVerse = db.reduce((s,x) => s+(parseFloat(x.verse)||0), 0);
+    const sousGar    = db.filter(x => x.fin_garantie && new Date(x.fin_garantie) >= today2).length;
+    const enRetard   = db.filter(x => { const r=(parseFloat(x.prix)||0)-(parseFloat(x.verse)||0); return r>0&&x.echeance&&new Date(x.echeance)<today2; }).length;
+
+    const statsData = [
+        ['RÉSUMÉ — Scanning Equipment Tool'],
+        ['Généré le', formatDate(today())],
+        [],
+        ['Indicateur','Valeur'],
+        ['Nombre de dossiers', db.length],
+        ["Chiffre d'affaires total", totalCA],
+        ['Total encaissé', totalVerse],
+        ['Reste à encaisser', totalCA - totalVerse],
+        ['Taux encaissement', db.length ? Math.round(totalVerse/Math.max(totalCA,1)*100)+'%' : '0%'],
+        ['Produits sous garantie', sousGar],
+        ['Paiements en retard', enRetard],
+    ];
+
+    XLSXMini.save([
+        { name: 'Ventes',  data: [headers, ...rows] },
+        { name: 'Résumé',  data: statsData }
+    ], 'SET_export_'+todayTime()+'.xlsx');
+
+    showToast('✅ Export Excel prêt !', 'success');
+}
+
+// ── Backup automatique planifié ──
+let backupInterval = null;
+
+function enregistrerPlanning() {
+    const jours = parseInt(document.getElementById('backup_frequence').value);
+    const heure = parseInt(document.getElementById('backup_heure').value);
+    localStorage.setItem('backup_frequence', jours);
+    localStorage.setItem('backup_heure', heure);
+    if(backupInterval) { clearInterval(backupInterval); backupInterval = null; }
+    if(jours === 0) {
+        majStatutBackup();
+        showToast('⏰ Sauvegarde automatique désactivée', '');
+        return;
+    }
+    // Vérifier toutes les minutes si l'heure planifiée est atteinte
+    backupInterval = setInterval(verifierBackupDu, 60000);
+    verifierBackupDu();
+    majStatutBackup();
+    const labels = {1:'chaque jour',7:'chaque semaine',30:'chaque mois'};
+    showToast('✅ Sauvegarde planifiée ' + (labels[jours]||'') + ' à ' + String(heure).padStart(2,'0') + ':00', 'success');
+}
+
+// Alias pour compatibilité init
+function planifierBackup() {
+    // Version silencieuse pour le démarrage (pas de toast)
+    const jours = parseInt(localStorage.getItem('backup_frequence') || '0');
+    const heure = parseInt(localStorage.getItem('backup_heure') || '8');
+    if(backupInterval) { clearInterval(backupInterval); backupInterval = null; }
+    if(jours === 0) return;
+    backupInterval = setInterval(verifierBackupDu, 60000);
+    verifierBackupDu();
+}
+
+function verifierBackupDu() {
+    const jours = parseInt(localStorage.getItem('backup_frequence') || '0');
+    const heure = parseInt(localStorage.getItem('backup_heure') || '8');
+    if(jours === 0) return;
+    const maintenant    = new Date();
+    const heureActuelle = maintenant.getHours();
+    const dernierBackup = localStorage.getItem('dernier_backup');
+    // Vérifier si c'est l'heure planifiée
+    if(heureActuelle !== heure) return;
+    if(!dernierBackup) { backupAuto(); return; }
+    const diff = (maintenant - new Date(dernierBackup)) / (1000*60*60*24);
+    if(diff >= jours) backupAuto();
+}
+
+function backupAuto() {
+    if(!db || db.length === 0) return;
+    localStorage.setItem('garantie_db_v4', JSON.stringify(db));
+    localStorage.setItem('dernier_backup', new Date().toISOString());
+    majStatutBackup();
+    if (firebaseOK && fbToken) syncToutFirebase();
+    showToast('✅ Sauvegarde automatique effectuée !', 'success');
+}
+
+function backupMaintenant() {
+    localStorage.setItem('garantie_db_v4', JSON.stringify(db));
+    localStorage.setItem('dernier_backup', new Date().toISOString());
+    majStatutBackup();
+    if (firebaseOK && fbToken) syncToutFirebase();
+    else showToast('✅ Sauvegarde locale — ' + db.length + ' dossiers', 'success');
+}
+
+function majStatutBackup() {
+    const el = document.getElementById('backup_status');
+    if(!el) return;
+    const jours  = parseInt(localStorage.getItem('backup_frequence') || '7');
+    const heure  = parseInt(localStorage.getItem('backup_heure') || '8');
+    const dernier = localStorage.getItem('dernier_backup');
+    const prochain = dernier ? new Date(new Date(dernier).getTime() + jours*86400000) : null;
+
+    // Sync selects
+    const selF = document.getElementById('backup_frequence');
+    const selH = document.getElementById('backup_heure');
+    if(selF) selF.value = String(jours);
+    if(selH) selH.value = String(heure);
+
+    const heureStr    = String(heure).padStart(2,'0') + ':00';
+    const dernierStr  = dernier
+        ? formatDate(dernier.substring(0,10)) + ' à ' + new Date(dernier).toLocaleTimeString('fr-FR',{hour:'2-digit',minute:'2-digit',second:'2-digit'})
+        : 'Jamais';
+    const prochainStr = (prochain && jours > 0)
+        ? formatDate(prochain.toISOString().substring(0,10)) + ' à ' + heureStr
+        : '—';
+    const labels = {0:'Désactivé', 1:'Chaque jour', 7:'Chaque semaine', 30:'Chaque mois'};
+
+    el.innerHTML = [
+        '📅 <b>Fréquence :</b> '           + (labels[jours] || jours + ' jours'),
+        '🕐 <b>Heure de lancement :</b> '  + (jours > 0 ? heureStr : '—'),
+        '✅ <b>Dernière sauvegarde :</b> '  + dernierStr,
+        '⏭️ <b>Prochaine sauvegarde :</b> '+ prochainStr,
+        '📦 <b>Dossiers :</b> '             + (db ? db.length : 0),
+    ].join('<br>');
+}
+
+let toastTimer;
+function showToast(msg, type='') {
+    const t = document.getElementById('toast');
+    t.textContent = msg; t.className = 'toast '+type+' show';
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(() => t.classList.remove('show'), 2800);
+}
+
+
+// ════════════════════════════════════════════════════════
+// SECURITE & LOCK  —  V7.0
+// ════════════════════════════════════════════════════════
+const PIN_KEY     = 'set_pin_v2';
+const LOCK_ON_KEY = 'set_lock_on';
+const SEC_EMAIL   = 'set_sec_email';
+const SEC_TEL     = 'set_sec_tel';
+const SEC_SEED       = 'set_sec_seed';
+
+// ── Génère le code de secours ──────────────────────────
+function secGenCode() {
+    var email = localStorage.getItem(SEC_EMAIL) || '';
+    var tel   = localStorage.getItem(SEC_TEL)   || '';
+    if (!email && !tel) return null;
+    var seed = localStorage.getItem(SEC_SEED);
+    if (!seed) {
+        seed = Math.random().toString(36).slice(2,10).toUpperCase();
+        localStorage.setItem(SEC_SEED, seed);
+    }
+    var raw = (email + '|' + tel + '|' + seed).toUpperCase();
+    var h = 5381;
+    for (var i = 0; i < raw.length; i++) h = ((h << 5) + h) ^ raw.charCodeAt(i);
+    var b = Math.abs(h).toString(36).toUpperCase().padStart(8,'0').slice(-8);
+    return b.slice(0,4) + '-' + b.slice(4);
+}
+
+// ── Page Sécurité ──────────────────────────────────────
+// ── Configuration EmailJS ─────────────────────────────
+function secPageInit() {
+    var email  = (localStorage.getItem(SEC_EMAIL) || '').trim();
+    var tel    = (localStorage.getItem(SEC_TEL)   || '').trim();
+    var lockOn = localStorage.getItem(LOCK_ON_KEY) === '1';
+    var hasCt  = !!(email || tel);
+
+    // Champs contacts
+    document.getElementById('secEmail').value      = email;
+    document.getElementById('secTel').value        = tel;
+    document.getElementById('secErrContact').style.display = 'none';
+    document.getElementById('secSaveMsg').textContent = hasCt ? '✅ Contact enregistré' : '';
+    var ed = document.getElementById('secEmailDisplay');
+    if (ed) ed.textContent = email || '(non renseigné)';
+
+    // Cards visibles uniquement si verrou actif
+    var cCard = document.getElementById('secContactCard');
+    var rCard = document.getElementById('secCodeCard');
+    if (cCard) cCard.style.display = lockOn ? 'block' : 'none';
+    if (rCard) rCard.style.display = (lockOn && hasCt) ? 'block' : 'none';
+
+    // Toggle
+    var tog  = document.getElementById('secToggle');
+    var lbl  = document.getElementById('secToggleLabel');
+    var sub  = document.getElementById('secToggleSub');
+    var knob = document.getElementById('secToggleKnob');
+    var zone = document.getElementById('secActiveZone');
+    var czone = document.getElementById('secConfirmZone');
+    if (czone) czone.style.display = 'none';
+    var hBtn = document.getElementById('hdrLockBtn');
+
+    if (lockOn) {
+        tog.classList.add('on');
+        tog.style.opacity = '1';
+        tog.style.pointerEvents = 'auto';
+        knob.textContent = '✓';
+        lbl.textContent  = 'Verrou activé';
+        sub.textContent  = 'Application protégée par PIN';
+        if (zone) zone.style.display = 'block';
+        if (hBtn) hBtn.style.display = hasCt ? 'block' : 'none';
+    } else {
+        tog.classList.remove('on');
+        tog.style.opacity = '1';
+        tog.style.pointerEvents = 'auto';
+        knob.textContent = '';
+        lbl.textContent  = 'Verrou désactivé';
+        sub.textContent  = 'Touchez pour activer';
+        if (zone) zone.style.display = 'none';
+        if (hBtn) { hBtn.style.display = 'none'; }  // toujours cacher si verrou OFF
+    }
+}
+
+
+function secDirty() {
+    var msg = document.getElementById('secSaveMsg');
+    if (msg) { msg.style.color = ''; msg.textContent = ''; }
+}
+
+
+function secSaveContacts() {
+    var email = document.getElementById('secEmail').value.trim();
+    var tel   = document.getElementById('secTel').value.trim();
+    if (!email && !tel) {
+        showToast('⚠️ Contact requis — saisissez un e-mail ou un téléphone', 'error');
+        var msg = document.getElementById('secSaveMsg');
+        if (msg) {
+            msg.style.color = '#dc2626';
+            msg.textContent = '⚠️ Veuillez saisir un e-mail ou un téléphone.';
+        }
+        return;
+    }
+    if (email) { localStorage.setItem(SEC_EMAIL, email); }
+    else       { localStorage.removeItem(SEC_EMAIL); }
+    if (tel)   { localStorage.setItem(SEC_TEL, tel); }
+    else       { localStorage.removeItem(SEC_TEL); }
+    if (!localStorage.getItem(SEC_SEED)) {
+        localStorage.setItem(SEC_SEED,
+            Math.random().toString(36).slice(2,10).toUpperCase());
+    }
+    document.getElementById('secSaveMsg').style.color = '';
+    document.getElementById('secSaveMsg').textContent = '✅ Contact enregistré';
+    showToast('✅ Contact enregistré', 'success');
+    // Rendre le cadenas visible maintenant que le contact est enregistré
+    var lockOn = localStorage.getItem(LOCK_ON_KEY) === '1';
+    var hBtn = document.getElementById('hdrLockBtn');
+    if (hBtn) hBtn.style.display = lockOn ? 'block' : 'none';
+    secPageInit();
+    var pinOk = !!localStorage.getItem(PIN_KEY);
+    if (lockOn && !pinOk) {
+        lkAfterCreate = 'securite';
+        setTimeout(lkShowCreate, 600);
+    }
+}
+
+
+function secToggleLock() {
+    var lockOn = localStorage.getItem(LOCK_ON_KEY) === '1';
+    if (!lockOn) {
+        secActivate();
+    } else {
+        // Afficher la confirmation inline
+        var az = document.getElementById('secActiveZone');
+        var cz = document.getElementById('secConfirmZone');
+        if (az) az.style.display = 'none';
+        if (cz) cz.style.display = 'block';
+    }
+}
+
+
+function secActivate() {
+    localStorage.removeItem(PIN_KEY);
+    localStorage.setItem(LOCK_ON_KEY, '1');
+    secPageInit();
+    showToast('Verrou activé — renseignez votre contact', 'success');
+}
+
+
+function secDeactivate() {
+    localStorage.removeItem(PIN_KEY);
+    localStorage.setItem(LOCK_ON_KEY, '0');
+    localStorage.removeItem(SEC_EMAIL);
+    localStorage.removeItem(SEC_TEL);
+    localStorage.removeItem(SEC_SEED);
+    secPageInit();
+    showToast('Verrou désactivé — contacts supprimés', 'success');
+}
+
+function secConfirmDeactivate() {
+    var cz = document.getElementById('secConfirmZone');
+    if (cz) cz.style.display = 'none';
+    secDeactivate();
+}
+
+function secCancelDeactivate() {
+    var az = document.getElementById('secActiveZone');
+    var cz = document.getElementById('secConfirmZone');
+    if (cz) cz.style.display = 'none';
+    if (az) az.style.display = 'block';
+}
+
+
+function secChangePin() {
+    var email = (localStorage.getItem(SEC_EMAIL) || '').trim();
+    var tel   = (localStorage.getItem(SEC_TEL)   || '').trim();
+    if (!email && !tel) {
+        showToast('⚠️ Renseignez un contact de récupération avant de changer le PIN', 'error');
+        return;
+    }
+    localStorage.removeItem(PIN_KEY);
+    lkAfterCreate = 'securite';
+    lkShowCreate();
+}
+
+
+function appLock() {
+    if (localStorage.getItem(LOCK_ON_KEY) !== '1') return;
+    lkShowVerif();
+}
+
+// ── Afficher l'écran : mode création ──────────────────
+function lkShowCreate() {
+    pinBuffer = ''; pinStep = 0; pinFirst = '';
+    lkDots(); lkMsg('');
+    document.getElementById('lkSub').textContent = 'Cr\u00e9ez votre code PIN \u00e0 4 chiffres';
+    document.getElementById('lkForgotBtn').style.display = 'none';
+    lkPanelClose();
+    document.getElementById('lockScreen').classList.remove('hidden');
+}
+
+// ── Afficher l'écran : mode vérification ──────────────
+function lkShowVerif() {
+    pinBuffer = ''; pinStep = -1;
+    lkDots(); lkMsg('');
+    document.getElementById('lkSub').textContent = 'Entrez votre code PIN';
+    document.getElementById('lkForgotBtn').style.display = 'block';
+    lkPanelClose();
+    document.getElementById('lockScreen').classList.remove('hidden');
+}
+
+// ── Variables PIN ───────────────────────────────────────
+var pinBuffer    = '';
+var pinStep      = -1;
+var pinFirst     = '';
+var lkAfterCreate = '';   // page à ouvrir après création PIN ('securite' ou '')
+
+// ── Clavier ─────────────────────────────────────────────
+function pinKey(d) {
+    if (!d || pinBuffer.length >= 4) return;
+    pinBuffer += d;
+    lkDots();
+    if (pinBuffer.length === 4) setTimeout(pinCheck, 180);
+}
+
+function pinDel() {
+    pinBuffer = pinBuffer.slice(0, -1);
+    lkDots();
+    lkMsg('');
+}
+
+function lkDots(state) {
+    for (var i = 0; i < 4; i++) {
+        var d = document.getElementById('pd' + i);
+        if (!d) continue;
+        d.className = 'lk-dot';
+        if      (state === 'ok')  d.classList.add('ok');
+        else if (state === 'err') d.classList.add('error');
+        else if (i < pinBuffer.length) d.classList.add('filled');
+    }
+}
+
+function lkMsg(t) {
+    var e = document.getElementById('lkMsg');
+    if (e) e.textContent = t;
+}
+
+function pinCheck() {
+    var stored = localStorage.getItem(PIN_KEY);
+
+    // Mode création étape 1 : mémoriser
+    if (pinStep === 0) {
+        pinFirst  = pinBuffer;
+        pinBuffer = '';
+        pinStep   = 1;
+        lkDots();
+        document.getElementById('lkSub').textContent = 'Confirmez votre PIN';
+        lkMsg('');
+        return;
+    }
+
+    // Mode création étape 2 : confirmer
+    if (pinStep === 1) {
+        if (pinBuffer === pinFirst) {
+            localStorage.setItem(PIN_KEY, btoa(pinBuffer));
+            lkDots('ok');
+            lkMsg('\u2705 PIN cr\u00e9\u00e9\u00a0!');
+            var hBtn = document.getElementById('hdrLockBtn');
+            if (hBtn) hBtn.style.display =
+                localStorage.getItem(LOCK_ON_KEY) === '1' ? 'block' : 'none';
+            setTimeout(lkUnlock, 700);
+        } else {
+            lkDots('err');
+            lkMsg('Codes diff\u00e9rents \u2014 recommencez');
+            document.getElementById('lkDots').classList.add('shake');
+            setTimeout(function() {
+                pinBuffer = ''; pinFirst = ''; pinStep = 0;
+                lkDots(); lkMsg('');
+                document.getElementById('lkDots').classList.remove('shake');
+                document.getElementById('lkSub').textContent = 'Cr\u00e9ez votre code PIN';
+            }, 900);
+        }
+        return;
+    }
+
+    // Mode vérification
+    if (stored && pinBuffer === atob(stored)) {
+        lkDots('ok');
+        setTimeout(lkUnlock, 300);
+    } else if (!stored) {
+        lkDots('err');
+        lkMsg('PIN r\u00e9initialis\u00e9 \u2014 cr\u00e9ez-en un nouveau');
+        setTimeout(lkShowCreate, 900);
+    } else {
+        lkDots('err');
+        lkMsg('Code incorrect');
+        document.getElementById('lkDots').classList.add('shake');
+        setTimeout(function() {
+            pinBuffer = '';
+            lkDots(); lkMsg('');
+            document.getElementById('lkDots').classList.remove('shake');
+        }, 800);
+    }
+}
+
+function lkUnlock() {
+    document.getElementById('lockScreen').classList.add('hidden');
+    lkPanelClose();
+    pinBuffer = ''; pinFirst = ''; pinStep = -1;
+    lkDots();
+    if (lkAfterCreate) {
+        var dest = lkAfterCreate;
+        lkAfterCreate = '';
+        switchTabById(dest);   // revient sur Sécurité + appelle secPageInit()
+    }
+}
+
+// ── Panneau "Code oublié" ───────────────────────────────
+function lkForgotToggle() {
+    var p = document.getElementById('lkPanel');
+    if (p.style.display === 'none') lkPanelOpen();
+    else lkPanelClose();
+}
+
+function lkPanelOpen() {
+    var email = (localStorage.getItem(SEC_EMAIL) || '').trim();
+    var tel   = (localStorage.getItem(SEC_TEL)   || '').trim();
+    var disp  = '';
+    if (email) {
+        var p = email.split('@');
+        disp = p[0].slice(0,2) + '***@' + (p[1] || '');
+    } else if (tel) {
+        disp = tel.slice(0,3) + ' *** ' + tel.slice(-2);
+    } else {
+        disp = 'Aucun contact enregistre';
+    }
+    document.getElementById('lkContact').textContent  = disp;
+    document.getElementById('lkStep1').style.display  = 'block';
+    document.getElementById('lkStep2').style.display  = 'none';
+    document.getElementById('lkResetMsg').textContent = '';
+    document.getElementById('lkResetInput').value     = '';
+    var cd = document.getElementById('lkCodeDisplay');
+    if (cd) cd.textContent = '';
+    document.getElementById('lkPanel').style.display   = 'block';
+    document.getElementById('lkForgotBtn').textContent = 'x Fermer';
+}
+
+function lkRevealCode() {
+    var code = secGenCode();
+    if (!code) {
+        document.getElementById('lkContact').textContent =
+            'Aucun contact — impossible de generer le code';
+        return;
+    }
+    var cd = document.getElementById('lkCodeDisplay');
+    if (cd) cd.textContent = code;
+    document.getElementById('lkStep1').style.display = 'none';
+    document.getElementById('lkStep2').style.display = 'block';
+}
+
+
+function lkPanelClose() {
+    var p = document.getElementById('lkPanel');
+    if (p) p.style.display = 'none';
+    var b = document.getElementById('lkForgotBtn');
+    if (b) b.textContent = 'Code oublié ?';
+    var i = document.getElementById('lkResetInput');
+    if (i) i.value = '';
+    var m = document.getElementById('lkResetMsg');
+    if (m) m.textContent = '';
+}
+
+function lkResetConfirm() {
+    var saisi = document.getElementById('lkResetInput').value.trim().toUpperCase();
+    var code  = secGenCode();
+    var msgEl = document.getElementById('lkResetMsg');
+    if (!code) { msgEl.textContent = 'Aucun contact enregistré'; return; }
+    if (!saisi) { msgEl.textContent = 'Saisissez le code reçu par e-mail'; return; }
+    if (saisi === code) {
+        localStorage.removeItem(PIN_KEY);
+        msgEl.textContent = 'PIN supprimé - rechargement...';
+        setTimeout(function() { location.reload(); }, 1200);
+    } else {
+        msgEl.textContent = 'Code incorrect';
+        document.getElementById('lkResetInput').value = '';
+    }
+}
+
+
+// ── switchTabById : hook pour secPageInit ──────────────
+(function() {
+    var _orig = switchTabById;
+    switchTabById = function(name) {
+        _orig(name);
+        if (name === 'securite') secPageInit();
+    };
+})();
+
+// ── Initialisation au démarrage ─────────────────────────
+(function initLock() {
+    var lockOn = localStorage.getItem(LOCK_ON_KEY) === '1';
+    var stored = localStorage.getItem(PIN_KEY);
+    var hBtn   = document.getElementById('hdrLockBtn');
+    if (hBtn) hBtn.style.display = lockOn ? 'block' : 'none';
+    if (!lockOn) return;
+    if (stored) { lkShowVerif(); } else { lkShowCreate(); }
+})();
+
+</script>
+
+
+<!-- SECURITE -->
+<div id="securite" class="content">
+    <button class="btn-back" onclick="goAccueil()">&#x1F3E0;</button>
+
+    <div class="card">
+        <div class="section-title">&#x1F512; Verrouillage</div>
+        <div style="display:flex;align-items:center;
+                    justify-content:space-between;padding:6px 0 4px">
+            <div>
+                <div id="secToggleLabel"
+                     style="font-size:.88rem;font-weight:600;color:var(--text)">
+                    Verrou d&#xe9;sactiv&#xe9;</div>
+                <div id="secToggleSub"
+                     style="font-size:.75rem;color:var(--muted);margin-top:3px">
+                    Touchez pour activer</div>
+            </div>
+            <div class="sec-toggle" id="secToggle" onclick="secToggleLock()">
+                <div class="sec-toggle-knob" id="secToggleKnob"></div>
+            </div>
+        </div>
+        <div id="secActiveZone"
+             style="display:none;margin-top:14px;padding-top:14px;
+                    border-top:1px solid var(--border)">
+            <button class="btn-secondary" style="width:100%"
+                    onclick="secChangePin()">&#x1F504; Changer le code PIN</button>
+        </div>
+
+        <!-- Confirmation désactivation -->
+        <div id="secConfirmZone"
+             style="display:none;margin-top:14px;padding:14px;
+                    background:#fef2f2;border-radius:12px;
+                    border:1.5px solid #fecdd3">
+            <p style="font-size:.82rem;font-weight:600;color:#be123c;
+                      margin-bottom:6px">&#x26A0;&#xFE0F; D&#xe9;sactiver le verrou&nbsp;?</p>
+            <p style="font-size:.76rem;color:#9f1239;line-height:1.55;
+                      margin-bottom:14px">
+                Le PIN et <b>toutes les informations de contact</b>
+                de r&#xe9;cup&#xe9;ration seront <b>d&#xe9;finitivement supprim&#xe9;s</b>.
+            </p>
+            <div style="display:flex;gap:10px">
+                <button onclick="secConfirmDeactivate()"
+                        style="flex:1;background:#e11d48;color:#fff;
+                               border:none;border-radius:9px;padding:11px;
+                               font-size:.85rem;font-weight:700;
+                               font-family:'Inter',sans-serif;cursor:pointer">
+                    &#x2713; Confirmer
+                </button>
+                <button onclick="secCancelDeactivate()"
+                        style="flex:1;background:#f1f5f9;color:#64748b;
+                               border:1.5px solid #e2e8f0;border-radius:9px;
+                               padding:11px;font-size:.85rem;font-weight:600;
+                               font-family:'Inter',sans-serif;cursor:pointer">
+                    Annuler
+                </button>
+            </div>
+        </div>
+        <div id="secErrContact"
+             style="display:none;margin-top:12px;padding:10px 14px;
+                    background:#fef2f2;border-radius:9px;
+                    font-size:.8rem;color:#dc2626;line-height:1.5">
+            &#x26A0;&#xFE0F; Un <b>e-mail</b> ou un <b>t&#xe9;l&#xe9;phone</b>
+            est requis. Renseignez-le ci-dessous puis r&#xe9;essayez.
+        </div>
+    </div>
+
+    <div class="card" id="secContactCard" style="display:none">
+        <div class="section-title">&#x1F4EC; Contact de r&#xe9;cup&#xe9;ration</div>
+        <p style="font-size:.8rem;color:var(--muted);margin-bottom:14px;line-height:1.55">
+            Votre e-mail pour recevoir le code de r&#xe9;initialisation en cas d'oubli du PIN.
+        </p>
+        <div class="field"><label>E-mail</label>
+            <input type="email" id="secEmail"
+                   placeholder="votre@email.com" oninput="secDirty()"></div>
+        <div class="field"><label>T&#xe9;l&#xe9;phone (optionnel)</label>
+            <input type="tel" id="secTel"
+                   placeholder="+33 6 12 34 56 78" oninput="secDirty()"></div>
+        <button class="btn-primary" id="secSaveBtn"
+                style="width:100%;margin-top:6px"
+                onclick="secSaveContacts()">
+            &#x1F4BE; Enregistrer
+        </button>
+        <div id="secSaveMsg" style="font-size:.75rem;margin-top:8px;min-height:18px"></div>
+    </div>
+
+        <div class="card" id="secCodeCard" style="display:none">
+        <div class="section-title">&#x1F4E7; R&#xe9;cup&#xe9;ration par e-mail</div>
+        <p style="font-size:.8rem;color:var(--muted);
+                  margin-bottom:12px;line-height:1.55">
+            En cas d'oubli du PIN&nbsp;: appuyez sur
+            &#xAB;&nbsp;Code oubli&#xe9;&nbsp;?&#xBB; sur l'&#xe9;cran
+            de verrouillage. L'app Mail s'ouvrira avec le code
+            pr&#xe9;-r&#xe9;dig&#xe9; &#x2014; envoyez-le &#xe0; vous-m&#xea;me
+            puis saisissez-le pour r&#xe9;initialiser le PIN.
+        </p>
+        <div style="background:#f0fdf4;border:1px solid #86efac;
+                    border-radius:10px;padding:10px 14px;
+                    font-size:.8rem;color:#166534">
+            &#x2709; E-mail enregistr&#xe9;&nbsp;: <b id="secEmailDisplay"></b>
+        </div>
+    </div>
+</div>
+
+</body>
+</html>
