@@ -1,0 +1,838 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>SET — Scanner V2.2</title>
+<style>
+:root {
+    --bg:      #0f1117;
+    --surface: #1a1d27;
+    --card:    #22263a;
+    --border:  rgba(255,255,255,.08);
+    --accent:  #3b82f6;
+    --cyan:    #06b6d4;
+    --ok:      #22c55e;
+    --warn:    #f59e0b;
+    --danger:  #ef4444;
+    --text:    #f1f5f9;
+    --muted:   #94a3b8;
+    --r:       14px;
+}
+* { box-sizing:border-box; margin:0; padding:0; -webkit-tap-highlight-color:transparent; }
+body {
+    font-family:-apple-system,BlinkMacSystemFont,'Helvetica Neue',sans-serif;
+    background:var(--bg); color:var(--text);
+    min-height:100vh; padding-bottom:40px;
+    max-width:430px; margin:auto;
+}
+
+/* Header */
+.hdr { padding:20px 18px 16px; display:flex; align-items:center; gap:12px; }
+.hdr-ico { width:42px;height:42px; background:linear-gradient(135deg,var(--accent),var(--cyan));
+           border-radius:11px; display:flex;align-items:center;justify-content:center;font-size:1.2rem; }
+.hdr h1 { font-size:1rem;font-weight:700; }
+.hdr p  { font-size:.7rem;color:var(--muted);margin-top:1px; }
+
+/* Tabs */
+.tabs { display:flex;gap:6px;padding:0 18px 16px; }
+.tab  { flex:1;padding:10px 6px;border:1.5px solid var(--border);border-radius:10px;
+        background:var(--surface);color:var(--muted);font-size:.78rem;font-weight:600;
+        cursor:pointer;text-align:center;transition:all .2s; }
+.tab.active { background:var(--accent);border-color:var(--accent);color:#fff; }
+
+/* ── Caméra ── */
+.cam-wrap {
+    margin:0 18px 12px; border-radius:var(--r);
+    overflow:hidden; position:relative; background:#000;
+    aspect-ratio:4/3;
+}
+#video { width:100%;height:100%;object-fit:cover;display:block; }
+
+/* Viseur */
+.vf { position:absolute;inset:0;display:flex;align-items:center;justify-content:center;pointer-events:none; }
+.vf-box { width:72%;aspect-ratio:3/2;position:relative; }
+.vf-corner { position:absolute;width:24px;height:24px;border-color:rgba(255,255,255,.9);border-style:solid; }
+.vf-corner.tl{top:0;left:0;border-width:3px 0 0 3px;border-radius:5px 0 0 0}
+.vf-corner.tr{top:0;right:0;border-width:3px 3px 0 0;border-radius:0 5px 0 0}
+.vf-corner.bl{bottom:0;left:0;border-width:0 0 3px 3px;border-radius:0 0 0 5px}
+.vf-corner.br{bottom:0;right:0;border-width:0 3px 3px 0;border-radius:0 0 5px 0}
+.vf-laser {
+    position:absolute;top:0;left:4%;right:4%;height:2px;
+    background:linear-gradient(90deg,transparent,var(--accent),var(--cyan),transparent);
+    box-shadow:0 0 8px var(--cyan);
+    animation:laserscan 1.8s ease-in-out infinite;
+}
+@keyframes laserscan { 0%,100%{top:2%} 50%{top:96%} }
+
+.cam-hint {
+    position:absolute;bottom:10px;left:0;right:0;
+    text-align:center;font-size:.68rem;color:rgba(255,255,255,.65);
+    font-weight:500;letter-spacing:.02em;
+}
+.cam-placeholder {
+    width:100%;height:100%;display:flex;flex-direction:column;
+    align-items:center;justify-content:center;gap:10px;
+    background:var(--card);color:var(--muted);font-size:.82rem;
+}
+
+/* Contrôles caméra */
+.cam-ctrl { display:flex;gap:8px;padding:0 18px 14px; }
+.btn { padding:12px;border:none;border-radius:11px;font-size:.84rem;font-weight:700;
+       cursor:pointer;transition:transform .12s;font-family:inherit;display:flex;
+       align-items:center;justify-content:center;gap:6px; }
+.btn:active { transform:scale(.95); }
+.btn-blue   { flex:1;background:var(--accent);color:#fff; }
+.btn-gray   { flex:1;background:var(--card);color:var(--muted);border:1.5px solid var(--border); }
+.btn-torch  { width:50px;flex:none;background:var(--card);color:var(--warn);
+              border:1.5px solid var(--border);font-size:1.1rem; }
+.btn-torch.on { background:var(--warn);color:#000; }
+
+/* Upload zone */
+.upload-zone {
+    margin:0 18px 14px;border:2px dashed var(--border);border-radius:var(--r);
+    padding:24px 16px;text-align:center;cursor:pointer;position:relative;
+    transition:border-color .2s;background:var(--surface);
+}
+.upload-zone:hover,.upload-zone:active { border-color:var(--accent); }
+.upload-zone input { position:absolute;inset:0;opacity:0;cursor:pointer;font-size:0; }
+.upload-zone .ico  { font-size:2.2rem;margin-bottom:8px; }
+.upload-zone p     { font-size:.8rem;color:var(--muted);line-height:1.5; }
+.upload-zone b     { color:var(--accent); }
+#img-prev { width:100%;border-radius:10px;margin-top:10px;display:none; }
+
+/* Progression OCR */
+.progress-wrap {
+    margin:0 18px 12px;background:var(--card);border-radius:11px;
+    padding:12px 14px;display:none;
+}
+.progress-top { display:flex;justify-content:space-between;
+                font-size:.72rem;color:var(--muted);margin-bottom:7px; }
+.progress-bar { height:5px;background:var(--surface);border-radius:3px;overflow:hidden; }
+.progress-fill { height:100%;width:0%;border-radius:3px;
+                 background:linear-gradient(90deg,var(--accent),var(--cyan));
+                 transition:width .3s ease; }
+
+/* OCR texte brut */
+.ocr-section { padding:0 18px 14px; }
+.section-lbl { font-size:.68rem;text-transform:uppercase;letter-spacing:.06em;
+               color:var(--muted);font-weight:700;margin-bottom:6px; }
+textarea {
+    width:100%;background:var(--card);border:1.5px solid var(--border);
+    border-radius:11px;color:var(--text);font-family:monospace;
+    font-size:.8rem;padding:12px;resize:vertical;min-height:90px;
+}
+textarea:focus { outline:none;border-color:var(--accent); }
+
+/* Résultat */
+.result-card {
+    margin:0 18px 14px;background:var(--card);
+    border:1.5px solid var(--border);border-radius:var(--r);
+    overflow:hidden;display:none;
+}
+.result-card.show { display:block; }
+.result-hdr {
+    padding:12px 16px;display:flex;align-items:center;gap:8px;
+    background:linear-gradient(135deg,rgba(59,130,246,.12),rgba(6,182,212,.12));
+    border-bottom:1px solid var(--border);font-size:.8rem;font-weight:700;
+}
+.dot-ok { width:8px;height:8px;border-radius:50%;background:var(--ok);
+          box-shadow:0 0 6px var(--ok);flex-shrink:0; }
+.src-badge { margin-left:auto;font-size:.65rem;font-weight:400;
+             opacity:.6;background:var(--surface);padding:2px 8px;
+             border-radius:10px;border:1px solid var(--border); }
+
+.result-fields { padding:14px 16px;display:flex;flex-direction:column;gap:10px; }
+.rf { display:flex;flex-direction:column;gap:4px; }
+.rf label { font-size:.63rem;text-transform:uppercase;letter-spacing:.06em;
+            color:var(--muted);font-weight:700; }
+.rf input {
+    background:var(--surface);border:1.5px solid var(--border);
+    border-radius:9px;color:var(--text);font-size:.88rem;
+    padding:9px 12px;font-family:monospace;transition:border-color .15s;
+}
+.rf input:focus { outline:none;border-color:var(--accent); }
+.rf input.filled { border-color:rgba(34,197,94,.5);background:rgba(34,197,94,.06); }
+.rf input.empty  { border-color:rgba(239,68,68,.3);background:rgba(239,68,68,.04); }
+
+.result-grid { display:grid;grid-template-columns:1fr 1fr;gap:8px; }
+
+.confidence-row {
+    padding:10px 16px;border-top:1px solid var(--border);
+    display:flex;align-items:center;gap:8px;font-size:.72rem;color:var(--muted);
+}
+.confidence-bar { flex:1;height:4px;background:var(--surface);border-radius:2px;overflow:hidden; }
+.confidence-fill { height:100%;border-radius:2px;transition:width .4s ease; }
+
+.result-actions {
+    padding:12px 16px;display:flex;gap:8px;border-top:1px solid var(--border);
+}
+.btn-confirm { flex:1;background:linear-gradient(135deg,var(--accent),var(--cyan));
+               color:#fff;padding:13px;border:none;border-radius:10px;
+               font-size:.85rem;font-weight:700;cursor:pointer;font-family:inherit; }
+.btn-confirm:active { transform:scale(.97); }
+.btn-reset { background:var(--surface);color:var(--muted);padding:13px 16px;
+             border:1.5px solid var(--border);border-radius:10px;
+             font-size:.85rem;cursor:pointer;font-family:inherit; }
+
+/* Log */
+.log-section { padding:0 18px; }
+.log-box {
+    background:var(--card);border-radius:11px;padding:10px 12px;
+    font-size:.68rem;color:var(--muted);font-family:monospace;
+    max-height:100px;overflow-y:auto;line-height:1.8;
+}
+.l-ok  { color:var(--ok); }
+.l-w   { color:var(--warn); }
+.l-err { color:var(--danger); }
+
+/* Toast */
+.toast {
+    position:fixed;bottom:24px;left:50%;
+    transform:translateX(-50%) translateY(80px);
+    background:var(--card);border:1px solid var(--border);
+    color:var(--text);padding:10px 20px;border-radius:24px;
+    font-size:.82rem;font-weight:600;white-space:nowrap;
+    transition:transform .3s cubic-bezier(.34,1.56,.64,1);
+    z-index:999;box-shadow:0 8px 32px rgba(0,0,0,.5);
+}
+.toast.show    { transform:translateX(-50%) translateY(0); }
+.toast.success { border-color:rgba(34,197,94,.4);color:var(--ok); }
+.toast.error   { border-color:rgba(239,68,68,.4); color:var(--danger); }
+.toast.warn    { border-color:rgba(245,158,11,.4);color:var(--warn); }
+</style>
+</head>
+<body>
+
+<!-- Header -->
+<div class="hdr">
+    <div class="hdr-ico">📷</div>
+    <div>
+        <h1>Scanner SET — V2.2</h1>
+        <p>QR · Barcode · OCR <span style="background:rgba(59,130,246,.2);color:var(--accent);padding:1px 7px;border-radius:8px;font-size:.65rem;font-weight:700;margin-left:4px">V2.2</span></p>
+    </div>
+</div>
+
+<!-- Tabs -->
+<div class="tabs">
+    <div class="tab active" id="tab-bc" onclick="switchTab('barcode')">📊 Code-barres / QR</div>
+    <div class="tab"        id="tab-ocr" onclick="switchTab('ocr')">📄 OCR Étiquette</div>
+</div>
+
+<!-- ═══ TAB BARCODE ═══ -->
+<div id="pane-barcode">
+    <div class="cam-wrap">
+        <div class="cam-placeholder" id="cam-ph">
+            <span style="font-size:3rem">📷</span>
+            <p>Appuyez sur <b style="color:var(--accent)">Démarrer le scan</b></p>
+        </div>
+        <video id="video" autoplay playsinline muted style="display:none"></video>
+        <div class="vf" id="vf" style="display:none">
+            <div class="vf-box">
+                <div class="vf-corner tl"></div><div class="vf-corner tr"></div>
+                <div class="vf-corner bl"></div><div class="vf-corner br"></div>
+                <div class="vf-laser"></div>
+            </div>
+        </div>
+        <div class="cam-hint" id="cam-hint" style="display:none">
+            Centrez le code dans le cadre
+        </div>
+    </div>
+    <div class="cam-ctrl">
+        <button class="btn btn-blue"  id="btn-go"    onclick="startScan()">▶ Démarrer le scan</button>
+        <button class="btn btn-gray"  id="btn-stop"  onclick="stopScan()" style="display:none">⏹ Arrêter</button>
+        <button class="btn btn-torch" id="btn-torch" onclick="toggleTorch()" style="display:none">🔦</button>
+    </div>
+    <div class="upload-zone">
+        <input type="file" accept="image/*" capture="environment" onchange="scanImage(event)" id="img-input">
+        <div class="ico">🖼️</div>
+        <p><b>Photographiez l'étiquette complète</b><br>
+           <span style="font-size:.7rem;opacity:.7">Code-barres + texte Model/S/N visibles</span></p>
+        <p style="font-size:.68rem;color:var(--cyan);margin-top:6px">
+           📸 Analyse automatique barcode <b>ET</b> OCR
+        </p>
+        <img id="img-prev" alt="">
+    </div>
+</div>
+
+<!-- ═══ TAB OCR ═══ -->
+<div id="pane-ocr" style="display:none">
+    <div class="upload-zone">
+        <input type="file" accept="image/*" capture="environment" onchange="startOCR(event)">
+        <div class="ico">📸</div>
+        <p><b>Photographiez l'étiquette</b> du produit<br>
+           <span style="font-size:.72rem;opacity:.7">(Model, S/N, code-barres visibles)</span></p>
+        <img id="ocr-prev" alt="" style="width:100%;border-radius:10px;margin-top:10px;display:none">
+    </div>
+
+    <div class="progress-wrap" id="ocr-prog">
+        <div class="progress-top">
+            <span id="ocr-status">Initialisation...</span>
+            <span id="ocr-pct">0%</span>
+        </div>
+        <div class="progress-bar">
+            <div class="progress-fill" id="ocr-fill"></div>
+        </div>
+    </div>
+
+    <div class="ocr-section">
+        <div class="section-lbl">Texte reconnu (éditable)</div>
+        <textarea id="ocr-txt" placeholder="Le texte OCR apparaîtra ici...&#10;Vous pouvez aussi coller du texte manuellement."></textarea>
+        <button class="btn btn-blue" style="width:100%;margin-top:8px" onclick="extraire()">
+            🔍 Extraire les informations
+        </button>
+    </div>
+</div>
+
+<!-- ═══ RÉSULTAT COMMUN ═══ -->
+<div class="result-card" id="result-card">
+    <div class="result-hdr">
+        <div class="dot-ok"></div>
+        <span>Informations extraites</span>
+        <span class="src-badge" id="r-src">—</span>
+    </div>
+    <div class="result-fields">
+        <div class="result-grid">
+            <div class="rf">
+                <label>N° de Série</label>
+                <input type="text" id="r-sn" placeholder="—">
+            </div>
+            <div class="rf">
+                <label>Type produit</label>
+                <input type="text" id="r-type" placeholder="—">
+            </div>
+        </div>
+        <div class="result-grid">
+            <div class="rf">
+                <label>Marque</label>
+                <input type="text" id="r-marque" placeholder="—">
+            </div>
+            <div class="rf">
+                <label>Taille / Format</label>
+                <input type="text" id="r-taille" placeholder="—">
+            </div>
+        </div>
+        <div class="rf">
+            <label>Modèle</label>
+            <input type="text" id="r-modele" placeholder="—">
+        </div>
+        <div class="rf">
+            <label>Code brut / EAN</label>
+            <input type="text" id="r-raw" placeholder="—" style="font-size:.75rem;opacity:.8">
+        </div>
+    </div>
+    <!-- Indicateur de confiance -->
+    <div class="confidence-row">
+        <span>Confiance :</span>
+        <div class="confidence-bar">
+            <div class="confidence-fill" id="conf-fill"></div>
+        </div>
+        <span id="conf-pct" style="font-weight:700;min-width:35px;text-align:right">0%</span>
+    </div>
+    <div class="result-actions">
+        <button class="btn-confirm" onclick="confirmer()">✅ Utiliser ces informations</button>
+        <button class="btn-reset"   onclick="reset()">↺</button>
+    </div>
+</div>
+
+<!-- Log debug -->
+<div class="log-section">
+    <div class="section-lbl" style="padding-bottom:6px">Journal</div>
+    <div class="log-box" id="log"></div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+
+
+
+<script src="https://cdn.jsdelivr.net/npm/@zxing/library@0.21.1/umd/index.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
+
+<script>
+// ══════════════════════════════════════════
+// UTILS
+// ══════════════════════════════════════════
+let _toastT;
+function toast(msg, type='') {
+    const t = document.getElementById('toast');
+    t.textContent = msg; t.className = 'toast ' + type + ' show';
+    clearTimeout(_toastT);
+    _toastT = setTimeout(() => t.classList.remove('show'), 3200);
+}
+function log(msg, cls='') {
+    const el = document.getElementById('log');
+    const d  = document.createElement('div');
+    d.className = cls ? 'l-' + cls : '';
+    const h = new Date().toLocaleTimeString('fr-FR',{hour:'2-digit',minute:'2-digit',second:'2-digit'});
+    d.textContent = '[' + h + '] ' + msg;
+    el.appendChild(d);
+    el.scrollTop = el.scrollHeight;
+}
+function switchTab(name) {
+    document.getElementById('tab-bc').classList.toggle('active', name==='barcode');
+    document.getElementById('tab-ocr').classList.toggle('active', name==='ocr');
+    document.getElementById('pane-barcode').style.display = name==='barcode'?'block':'none';
+    document.getElementById('pane-ocr').style.display     = name==='ocr'    ?'block':'none';
+    if(name==='barcode' && camActive) stopScan();
+}
+
+// ══════════════════════════════════════════
+// MODULE BARCODE / QR
+// ══════════════════════════════════════════
+let stream=null, camActive=false, torchOn=false, scanTimer=null, codeReader=null;
+
+async function startScan() {
+    try {
+        log('Demande caméra arrière...');
+        stream = await navigator.mediaDevices.getUserMedia({
+            video: { facingMode:{ideal:'environment'}, width:{ideal:1920}, height:{ideal:1080} }
+        });
+        const v = document.getElementById('video');
+        v.srcObject = stream; v.style.display = 'block';
+        document.getElementById('cam-ph').style.display   = 'none';
+        document.getElementById('vf').style.display       = 'flex';
+        document.getElementById('cam-hint').style.display = 'block';
+        document.getElementById('btn-go').style.display   = 'none';
+        document.getElementById('btn-stop').style.display = 'flex';
+        document.getElementById('btn-torch').style.display= 'flex';
+        camActive = true;
+        log('Caméra active ✓', 'ok');
+        toast('📷 Scan actif — centrez le code', 'success');
+        lancerDetection(v);
+    } catch(e) {
+        log('Erreur caméra : ' + e.message, 'err');
+        toast('❌ ' + e.message, 'error');
+    }
+}
+
+function stopScan() {
+    if(stream) { stream.getTracks().forEach(t=>t.stop()); stream=null; }
+    if(scanTimer) { clearInterval(scanTimer); scanTimer=null; }
+    if(codeReader) { try{codeReader.reset();}catch(e){} codeReader=null; }
+    const v = document.getElementById('video');
+    v.srcObject=null; v.style.display='none';
+    document.getElementById('cam-ph').style.display   = 'flex';
+    document.getElementById('vf').style.display       = 'none';
+    document.getElementById('cam-hint').style.display = 'none';
+    document.getElementById('btn-go').style.display   = 'flex';
+    document.getElementById('btn-stop').style.display = 'none';
+    document.getElementById('btn-torch').style.display= 'none';
+    camActive=false; torchOn=false;
+    log('Caméra arrêtée');
+}
+
+async function toggleTorch() {
+    if(!stream) return;
+    const track = stream.getVideoTracks()[0];
+    const caps  = track.getCapabilities && track.getCapabilities();
+    if(!caps || !caps.torch) { toast('🔦 Torche non disponible', 'warn'); return; }
+    torchOn = !torchOn;
+    await track.applyConstraints({ advanced:[{torch:torchOn}] });
+    document.getElementById('btn-torch').classList.toggle('on', torchOn);
+    log('Torche : ' + (torchOn?'ON':'OFF'), torchOn?'ok':'');
+}
+
+function lancerDetection(video) {
+    // Priorité : BarcodeDetector natif (Safari iOS 17+)
+    if('BarcodeDetector' in window) {
+        log('BarcodeDetector natif iOS ✓', 'ok');
+        const formats = ['qr_code','ean_13','ean_8','code_128','code_39','upc_a','upc_e','data_matrix','itf'];
+        const detector = new BarcodeDetector({formats});
+        scanTimer = setInterval(async () => {
+            if(!camActive || video.readyState < 2) return;
+            try {
+                const codes = await detector.detect(video);
+                if(codes.length > 0) {
+                    const c = codes[0];
+                    log('✅ Détecté : ' + c.rawValue + ' [' + c.format + ']', 'ok');
+                    stopScan();
+                    traiterCode(c.rawValue, c.format);
+                }
+            } catch(e) {}
+        }, 250);
+    } else {
+        log('BarcodeDetector absent — ZXing fallback', 'w');
+        try {
+            codeReader = new ZXing.BrowserMultiFormatReader();
+            codeReader.decodeFromVideoDevice(null, 'video', (result, err) => {
+                if(result) {
+                    log('✅ ZXing : ' + result.text, 'ok');
+                    stopScan();
+                    traiterCode(result.text, 'ZXing');
+                }
+            });
+        } catch(e) { log('ZXing erreur : ' + e.message, 'err'); }
+    }
+}
+
+async function scanImage(event) {
+    const file = event.target.files[0]; if(!file) return;
+    const url  = URL.createObjectURL(file);
+    const prev = document.getElementById('img-prev');
+    prev.src=url; prev.style.display='block';
+    log('Analyse image : ' + file.name);
+    toast('📷 Analyse barcode + OCR...', '');
+
+    let eanTrouve = null;
+
+    // ── Étape 1 : détecter le code-barres ──
+    if('BarcodeDetector' in window) {
+        try {
+            const img = new Image(); img.src=url;
+            await new Promise(r=>img.onload=r);
+            const det = new BarcodeDetector({formats:['qr_code','ean_13','ean_8','code_128','code_39','upc_a','upc_e']});
+            const codes = await det.detect(img);
+            if(codes.length>0) {
+                eanTrouve = codes[0].rawValue;
+                log('✅ Code-barres : ' + eanTrouve + ' [' + codes[0].format + ']', 'ok');
+                if(codes[0].format === 'qr_code') { traiterCode(eanTrouve,'qr_code'); return; }
+            }
+        } catch(e) { log('BarcodeDetector : ' + e.message, 'w'); }
+    }
+    if(!eanTrouve) {
+        try {
+            const reader = new ZXing.BrowserMultiFormatReader();
+            const result = await reader.decodeFromImageUrl(url);
+            if(result) { eanTrouve = result.text; log('✅ ZXing : ' + eanTrouve, 'ok'); }
+        } catch(e) {}
+    }
+
+    // ── Étape 2 : OCR automatique pour extraire modèle/marque ──
+    log('📸 OCR en cours pour modèle/marque...', '');
+    document.getElementById('ocr-prog').style.display = 'block';
+    try {
+        const { data } = await Tesseract.recognize(url, 'fra+eng', {
+            logger: m => {
+                if(m.status==='recognizing text') {
+                    const p = Math.round(m.progress*100);
+                    document.getElementById('ocr-fill').style.width = p+'%';
+                    document.getElementById('ocr-pct').textContent  = p+'%';
+                    document.getElementById('ocr-status').textContent = 'OCR... '+p+'%';
+                }
+            }
+        });
+        const texte = data.text.trim();
+        document.getElementById('ocr-txt').value = texte;
+        document.getElementById('ocr-fill').style.width      = '100%';
+        document.getElementById('ocr-fill').style.background = 'var(--ok)';
+        document.getElementById('ocr-status').textContent    = '✅ OCR terminé';
+        document.getElementById('ocr-pct').textContent       = '100%';
+        log('OCR terminé — ' + texte.length + ' caractères', 'ok');
+
+        // ── Étape 3 : Fusion EAN + OCR ──
+        const infos = parserTexte(texte);
+        if(eanTrouve) {
+            // S/N OCR prioritaire, EAN en raw
+            if(!infos.sn) infos.sn = eanTrouve;
+            infos.raw = eanTrouve + (infos.raw ? ' | ' + infos.raw : '');
+        }
+        afficher(infos, eanTrouve ? 'Barcode+OCR' : 'OCR');
+
+    } catch(e) {
+        log('OCR erreur : ' + e.message, 'err');
+        if(eanTrouve) traiterCode(eanTrouve, 'EAN');
+        else toast('❌ Aucune information extraite', 'error');
+    }
+}
+
+// ══════════════════════════════════════════
+// MODULE OCR
+// ══════════════════════════════════════════
+async function startOCR(event) {
+    const file = event.target.files[0]; if(!file) return;
+    const url  = URL.createObjectURL(file);
+    const prev = document.getElementById('ocr-prev');
+    prev.src=url; prev.style.display='block';
+
+    // Essayer d'abord BarcodeDetector sur l'image (souvent il y a un EAN)
+    if('BarcodeDetector' in window) {
+        try {
+            const img = new Image(); img.src=url;
+            await new Promise(r=>img.onload=r);
+            const det = new BarcodeDetector({formats:['ean_13','ean_8','code_128','code_39','qr_code']});
+            const codes = await det.detect(img);
+            if(codes.length>0) {
+                log('Code-barres trouvé dans étiquette : ' + codes[0].rawValue, 'ok');
+                // Garder en mémoire pour enrichir le résultat OCR
+                window._scanEAN = codes[0].rawValue;
+            }
+        } catch(e) {}
+    }
+
+    document.getElementById('ocr-prog').style.display = 'block';
+    document.getElementById('ocr-txt').value = '';
+    log('OCR démarré (fra+eng)...');
+
+    try {
+        const { data } = await Tesseract.recognize(url, 'fra+eng', {
+            logger: m => {
+                if(m.status === 'recognizing text') {
+                    const p = Math.round(m.progress*100);
+                    document.getElementById('ocr-fill').style.width = p + '%';
+                    document.getElementById('ocr-pct').textContent  = p + '%';
+                    document.getElementById('ocr-status').textContent = 'Reconnaissance... ' + p + '%';
+                } else {
+                    document.getElementById('ocr-status').textContent = m.status;
+                }
+            }
+        });
+        document.getElementById('ocr-txt').value = data.text.trim();
+        document.getElementById('ocr-fill').style.width      = '100%';
+        document.getElementById('ocr-fill').style.background = 'var(--ok)';
+        document.getElementById('ocr-pct').textContent       = '100%';
+        document.getElementById('ocr-status').textContent    = '✅ Terminé';
+        log('OCR terminé — ' + data.text.length + ' caractères', 'ok');
+        toast('✅ OCR terminé — extraction en cours...', 'success');
+        extraire();
+    } catch(e) {
+        log('OCR erreur : ' + e.message, 'err');
+        toast('❌ OCR échoué', 'error');
+    }
+}
+
+function extraire() {
+    const texte = document.getElementById('ocr-txt').value;
+    if(!texte.trim()) { toast('⚠️ Aucun texte', 'warn'); return; }
+    const infos = parserTexte(texte);
+    // Enrichir avec EAN si trouvé
+    if(window._scanEAN && !infos.raw) infos.raw = window._scanEAN;
+    afficher(infos, 'OCR');
+}
+
+// ══════════════════════════════════════════
+// PARSEUR UNIVERSEL
+// ══════════════════════════════════════════
+function traiterCode(valeur, format) {
+    log('Traitement : ' + valeur + ' [' + format + ']');
+    const infos = parserCode(valeur, String(format));
+    // Si EAN sans marque/modele → suggérer d'utiliser l'OCR
+    if(String(format).match(/EAN|UPC|ZXing/i) && !infos.marque && !infos.modele) {
+        infos._needOCR = true;
+        log('\u26a0\ufe0f EAN seul insuffisant \u2014 utilisez l\'onglet OCR pour la marque/mod\u00e8le', 'w');
+    }
+    afficher(infos, String(format));
+    // Afficher suggestion OCR si nécessaire
+    if(infos._needOCR) {
+        toast('\U0001f4f8 Conseil : utilisez l\'onglet OCR pour plus d\'infos', 'warn');
+    }
+}
+
+function parserCode(val, fmt) {
+    const i = { sn:'', marque:'', modele:'', type:'', taille:'', raw:val };
+    // QR JSON
+    if(fmt.toLowerCase().includes('qr')) {
+        try {
+            const o = JSON.parse(val);
+            i.sn=o.sn||o.serial||o.serialNumber||o.SN||'';
+            i.marque=o.brand||o.manufacturer||o.marque||'';
+            i.modele=o.model||o.modele||'';
+            i.type=o.type||'';
+            if(i.sn) return i;
+        } catch(e) {}
+        const sn = val.match(/(?:S[\/\?]N|SN|Serial)[:\s#=]+([A-Z0-9\-]{4,30})/i);
+        if(sn) i.sn = sn[1];
+        const mo = val.match(/(?:Model|MOD)[:\s]+([A-Z0-9\-]{4,20})/i);
+        if(mo) i.modele = mo[1];
+    }
+    // EAN / UPC — préfixe marque + conseil OCR
+    if(fmt.match(/EAN|UPC|ZXing/i)) {
+        i.sn = val;
+        const prefix3 = val.substring(0,3);
+        const brands = {'880':'Samsung','471':'Asus','489':'Samsung',
+                        '045':'Sony','040':'Panasonic','693':'Xiaomi',
+                        '476':'Samsung','300':'Samsung','500':'Sony'};
+        i.marque = brands[prefix3] || '';
+        // Signaler que l'OCR est nécessaire pour le modèle
+        i._needOCR = !i.marque;
+    }
+    // Code 128 / Code 39 — souvent contient le S/N
+    if(fmt.match(/128|39/i)) i.sn = val;
+    if(!i.sn) i.sn = val;
+    return i;
+}
+
+function parserTexte(texte) {
+    const i = { sn:'', marque:'', modele:'', type:'', taille:'', raw:'' };
+
+    // ── S/N — patterns très tolérants (erreurs OCR : S N, SIN, S.N...) ──
+    const snPatterns = [
+        /S[\s\/\?\.\,\\|]N[\s\.\:=\-]+([A-Z0-9]{6,25})/i,
+        /S[\s]?[\/\\|I1][\s]?N[\s\.\:]+([A-Z0-9]{6,25})/i,
+        /Serial[\s\w]{0,10}[:\s]+([A-Z0-9\-]{6,25})/i,
+        /IMEI[\s:]+(\d{15})/i,
+        /([0-9][A-Z0-9]{4}[A-Z][A-Z0-9]{7,14})/,
+    ];
+    for(const p of snPatterns) {
+        const m = texte.match(p);
+        if(m) {
+            const cand = m[1].trim();
+            if(!/^\d{13}$/.test(cand) && cand.length >= 6) { i.sn = cand; break; }
+        }
+    }
+
+    // ── Modèle — patterns Samsung + autres marques ──
+    const modelPatterns = [
+        /[Mm]a?[od][eé]l\s*(?:[Cc][oa][d][eé]\s*)?[:
+\s]+([A-Z0-9][A-Z0-9\-]{4,18})/,
+        /(QE\d{2}[A-Z0-9]{4,12})/,      // Samsung QLED
+        /(QN\d{2}[A-Z0-9]{4,12})/,      // Samsung Neo QLED
+        /(UN\d{2}[A-Z0-9]{4,12})/,      // Samsung UHD
+        /(KD-?\d{2}[A-Z0-9]{4,10})/,   // Sony
+        /(OLED\d{2}[A-Z0-9]{4,10})/i,  // LG OLED
+        /([A-Z]{2}\d{2}[A-Z][A-Z0-9\-]{3,12})/,
+    ];
+    const blacklist = ['MADE','CHINA','KOREA','SLOVAKIA','SERIAL','MODEL','CODE'];
+    for(const p of modelPatterns) {
+        const m = texte.match(p);
+        if(m && m[1] && m[1].length > 4) {
+            const cand = m[1].trim().toUpperCase();
+            if(!blacklist.some(b => cand.includes(b))) { i.modele = m[1].trim(); break; }
+        }
+    }
+
+    // ── Marque — déduction depuis texte ET modèle ──
+    const marqueRules = [
+        [/Samsung/i,           'Samsung'],
+        [/(QE|QN|UN|UA)\d{2}/i, 'Samsung'],
+        [/Apple|iPhone|iPad|MacBook/i, 'Apple'],
+        [/Sony/i,              'Sony'],
+        [/LG/i,                'LG'],
+        [/Philips/i,           'Philips'],
+        [/Hisense/i,           'Hisense'],
+        [/TCL/i,               'TCL'],
+        [/Panasonic/i,         'Panasonic'],
+        [/HP|LaserJet|OfficeJet/i, 'HP'],
+        [/Dell/i,              'Dell'],
+        [/Lenovo/i,            'Lenovo'],
+        [/Asus/i,              'Asus'],
+        [/Acer/i,              'Acer'],
+        [/Canon/i,             'Canon'],
+        [/Epson/i,             'Epson'],
+        [/Brother/i,           'Brother'],
+        [/Xiaomi|MIUI/i,       'Xiaomi'],
+        [/Huawei/i,            'Huawei'],
+    ];
+    for(const [re, nom] of marqueRules) {
+        if(texte.match(re) || (i.modele && i.modele.match(re))) { i.marque = nom; break; }
+    }
+
+    // ── Type — depuis modèle d'abord, puis texte ──
+    if(i.modele && /^(QE|QN|UN|KD|OLED|UA)/i.test(i.modele)) i.type = 'TV';
+    else if(!i.type) {
+        if(texte.match(/TV|T[eé]l[eé]viseur|LED|OLED|QLED/i))      i.type='TV';
+        else if(texte.match(/PC|Laptop|Notebook|MacBook/i))          i.type='PC';
+        else if(texte.match(/Imprimante|Printer|LaserJet/i))             i.type='Imprimante';
+        else if(texte.match(/T[eé]l[eé]phone|Smartphone|iPhone/i))      i.type='Telephone';
+        else if(texte.match(/Tablette|Tablet|iPad/i))                    i.type='Tablette';
+    }
+    // Si Samsung + modèle QE → TV
+    if(i.marque==='Samsung' && i.modele.match(/^QE\d{2}/i)) i.type='TV';
+
+    // ── Taille — depuis modèle en priorité ──
+    if(i.modele) {
+        const mt = i.modele.match(/(?:QE|KD|UN|OLED|QN|UA)?(\d{2})(?=[A-Z])/i);
+        if(mt && parseInt(mt[1])>=24 && parseInt(mt[1])<=98) i.taille = mt[1]+'"';
+    }
+    if(!i.taille) {
+        const mt2 = texte.match(/(\d{2})["\s]?(?:pouces|inch|")/i);
+        if(mt2 && parseInt(mt2[1])>=24) i.taille = mt2[1]+'"';
+    }
+
+    // ── EAN ou texte brut ──
+    const ean = texte.replace(/\s/g,'').match(/(\d{13})/);
+    if(ean) i.raw = ean[1];
+    else {
+        const lignes = texte.split('\n').filter(l=>l.trim().length>3);
+        i.raw = lignes.slice(0,2).join(' — ').substring(0,60);
+    }
+    return i;
+}
+
+// ── Score de confiance ──
+function calculerConfiance(infos) {
+    let score = 0;
+    if(infos.sn     && infos.sn.length > 5)    score += 35;
+    if(infos.marque && infos.marque.length > 1) score += 25;
+    if(infos.modele && infos.modele.length > 3) score += 25;
+    if(infos.type   && infos.type.length > 1)   score += 10;
+    if(infos.taille && infos.taille.length > 1) score +=  5;
+    return Math.min(score, 100);
+}
+
+// ══════════════════════════════════════════
+// AFFICHAGE RÉSULTAT
+// ══════════════════════════════════════════
+function afficher(infos, src) {
+    document.getElementById('result-card').classList.add('show');
+    document.getElementById('r-src').textContent = src;
+    setF('r-sn',     infos.sn);
+    setF('r-marque', infos.marque);
+    setF('r-modele', infos.modele);
+    setF('r-type',   infos.type);
+    setF('r-taille', infos.taille||'');
+    setF('r-raw',    infos.raw);
+
+    const conf = calculerConfiance(infos);
+    const fill = document.getElementById('conf-fill');
+    fill.style.width      = conf + '%';
+    fill.style.background = conf>=70?'var(--ok)':conf>=40?'var(--warn)':'var(--danger)';
+    document.getElementById('conf-pct').textContent = conf + '%';
+    document.getElementById('conf-pct').style.color =
+        conf>=70?'var(--ok)':conf>=40?'var(--warn)':'var(--danger)';
+
+    document.getElementById('result-card').scrollIntoView({behavior:'smooth',block:'nearest'});
+    log('→ SN:' + infos.sn + ' | ' + infos.marque + ' ' + infos.modele +
+        ' | ' + infos.type + (infos.taille?' '+infos.taille:'') +
+        ' [confiance:' + conf + '%]', conf>=70?'ok':conf>=40?'w':'err');
+    toast('✅ ' + conf + '% de confiance', conf>=70?'success':conf>=40?'warn':'error');
+    // Stocker pour intégration SET
+    window._lastScanResult = infos;
+}
+
+function setF(id, val) {
+    const el = document.getElementById(id);
+    if(!el) return;
+    el.value = val||'';
+    el.classList.remove('filled','empty');
+    el.classList.add(val ? 'filled' : 'empty');
+}
+
+function confirmer() {
+    const r = window._lastScanResult;
+    if(!r) return;
+    // Mettre à jour depuis les champs (l'utilisateur peut les avoir corrigés)
+    r.sn     = document.getElementById('r-sn').value;
+    r.marque = document.getElementById('r-marque').value;
+    r.modele = document.getElementById('r-modele').value;
+    r.type   = document.getElementById('r-type').value;
+    r.taille = document.getElementById('r-taille').value;
+    log('✅ CONFIRMÉ : ' + JSON.stringify(r), 'ok');
+    toast('✅ Prêt à remplir le formulaire SET !', 'success');
+    console.log('SET_SCAN_RESULT:', r);
+    // → lors de l'intégration : appliquerInfosScan(r)
+}
+
+function reset() {
+    document.getElementById('result-card').classList.remove('show');
+    ['r-sn','r-marque','r-modele','r-type','r-taille','r-raw'].forEach(id=>{
+        const el=document.getElementById(id);
+        if(el){el.value='';el.classList.remove('filled','empty');}
+    });
+    document.getElementById('ocr-txt').value='';
+    document.getElementById('ocr-prog').style.display='none';
+    ['ocr-prev','img-prev'].forEach(id=>{
+        const el=document.getElementById(id);
+        if(el){el.style.display='none';el.src='';}
+    });
+    window._lastScanResult=null;
+    window._scanEAN=null;
+    log('Reset ✓');
+}
+
+// Init
+log('BarcodeDetector : ' + ('BarcodeDetector' in window ? '✅ natif disponible' : '⚠️ absent (ZXing)'), 'BarcodeDetector' in window ? 'ok':'w');
+log('Module Scanner V2 prêt');
+</script>
+</body>
+</html>
