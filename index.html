@@ -1,0 +1,770 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>SET — Scanner V2.6</title>
+<style>
+:root {
+    --bg:#0f1117; --surface:#1a1d27; --card:#22263a;
+    --border:rgba(255,255,255,.08); --accent:#3b82f6; --cyan:#06b6d4;
+    --ok:#22c55e; --warn:#f59e0b; --danger:#ef4444;
+    --text:#f1f5f9; --muted:#94a3b8; --r:14px;
+}
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+body{font-family:-apple-system,BlinkMacSystemFont,'Helvetica Neue',sans-serif;
+     background:var(--bg);color:var(--text);min-height:100vh;
+     padding-bottom:40px;max-width:430px;margin:auto}
+.hdr{padding:20px 18px 16px;display:flex;align-items:center;gap:12px}
+.hdr-ico{width:42px;height:42px;background:linear-gradient(135deg,var(--accent),var(--cyan));
+         border-radius:11px;display:flex;align-items:center;justify-content:center;font-size:1.2rem}
+.hdr h1{font-size:1rem;font-weight:700}
+.hdr p{font-size:.7rem;color:var(--muted);margin-top:2px;display:flex;align-items:center;gap:6px}
+.ver{background:rgba(59,130,246,.2);color:var(--accent);padding:1px 7px;
+     border-radius:8px;font-size:.65rem;font-weight:700}
+.tabs{display:flex;gap:6px;padding:0 18px 16px}
+.tab{flex:1;padding:10px 6px;border:1.5px solid var(--border);border-radius:10px;
+     background:var(--surface);color:var(--muted);font-size:.78rem;font-weight:600;
+     cursor:pointer;text-align:center;transition:all .2s}
+.tab.active{background:var(--accent);border-color:var(--accent);color:#fff}
+.cam-wrap{margin:0 18px 12px;border-radius:var(--r);overflow:hidden;
+          position:relative;background:#000;aspect-ratio:4/3}
+#video{width:100%;height:100%;object-fit:cover;display:block}
+.vf{position:absolute;inset:0;display:flex;align-items:center;
+    justify-content:center;pointer-events:none}
+.vf-box{width:72%;aspect-ratio:3/2;position:relative}
+.vf-corner{position:absolute;width:24px;height:24px;
+           border-color:rgba(255,255,255,.9);border-style:solid}
+.tl{top:0;left:0;border-width:3px 0 0 3px;border-radius:5px 0 0 0}
+.tr{top:0;right:0;border-width:3px 3px 0 0;border-radius:0 5px 0 0}
+.bl{bottom:0;left:0;border-width:0 0 3px 3px;border-radius:0 0 0 5px}
+.br{bottom:0;right:0;border-width:0 3px 3px 0;border-radius:0 0 5px 0}
+.vf-laser{position:absolute;top:0;left:4%;right:4%;height:2px;
+          background:linear-gradient(90deg,transparent,var(--accent),var(--cyan),transparent);
+          box-shadow:0 0 8px var(--cyan);animation:ls 1.8s ease-in-out infinite}
+@keyframes ls{0%,100%{top:2%}50%{top:96%}}
+.cam-hint{position:absolute;bottom:10px;left:0;right:0;text-align:center;
+          font-size:.68rem;color:rgba(255,255,255,.65);font-weight:500}
+.cam-ph{width:100%;height:100%;display:flex;flex-direction:column;
+        align-items:center;justify-content:center;gap:10px;
+        background:var(--card);color:var(--muted);font-size:.82rem}
+.cam-ctrl{display:flex;gap:8px;padding:0 18px 14px}
+.btn{padding:12px;border:none;border-radius:11px;font-size:.84rem;font-weight:700;
+     cursor:pointer;transition:transform .12s;font-family:inherit;
+     display:flex;align-items:center;justify-content:center;gap:6px}
+.btn:active{transform:scale(.95)}
+.btn-blue{flex:1;background:var(--accent);color:#fff}
+.btn-green{flex:1;background:var(--ok);color:#fff}
+.btn-gray{flex:1;background:var(--card);color:var(--muted);border:1.5px solid var(--border)}
+.btn-torch{width:50px;flex:none;background:var(--card);color:var(--warn);
+           border:1.5px solid var(--border);font-size:1.1rem}
+.btn-torch.on{background:var(--warn);color:#000}
+.upload-zone{margin:0 18px 14px;border:2px dashed var(--border);border-radius:var(--r);
+             padding:24px 16px;text-align:center;cursor:pointer;position:relative;
+             transition:border-color .2s;background:var(--surface)}
+.upload-zone:hover,.upload-zone:active{border-color:var(--accent)}
+.upload-zone input{position:absolute;inset:0;opacity:0;cursor:pointer;font-size:0}
+.upload-zone .ico{font-size:2.2rem;margin-bottom:8px}
+.upload-zone p{font-size:.8rem;color:var(--muted);line-height:1.5}
+.upload-zone b{color:var(--accent)}
+#img-prev{width:100%;border-radius:10px;margin-top:10px;display:none}
+.prog-wrap{margin:0 18px 12px;background:var(--card);border-radius:11px;
+           padding:12px 14px;display:none}
+.prog-top{display:flex;justify-content:space-between;font-size:.72rem;
+          color:var(--muted);margin-bottom:7px}
+.prog-bar{height:5px;background:var(--surface);border-radius:3px;overflow:hidden}
+.prog-fill{height:100%;width:0%;border-radius:3px;
+           background:linear-gradient(90deg,var(--accent),var(--cyan));transition:width .3s}
+.ocr-sec{padding:0 18px 14px}
+.sec-lbl{font-size:.68rem;text-transform:uppercase;letter-spacing:.06em;
+         color:var(--muted);font-weight:700;margin-bottom:6px}
+textarea{width:100%;background:var(--card);border:1.5px solid var(--border);
+         border-radius:11px;color:var(--text);font-family:monospace;
+         font-size:.8rem;padding:12px;resize:vertical;min-height:90px}
+textarea:focus{outline:none;border-color:var(--accent)}
+.res-card{margin:0 18px 14px;background:var(--card);border:1.5px solid var(--border);
+          border-radius:var(--r);overflow:hidden;display:none}
+.res-card.show{display:block}
+.res-hdr{padding:12px 16px;display:flex;align-items:center;gap:8px;
+         background:linear-gradient(135deg,rgba(59,130,246,.12),rgba(6,182,212,.12));
+         border-bottom:1px solid var(--border);font-size:.8rem;font-weight:700}
+.dot-ok{width:8px;height:8px;border-radius:50%;background:var(--ok);
+        box-shadow:0 0 6px var(--ok);flex-shrink:0}
+.src-b{margin-left:auto;font-size:.65rem;font-weight:400;opacity:.6;
+       background:var(--surface);padding:2px 8px;border-radius:10px;
+       border:1px solid var(--border)}
+.res-fields{padding:14px 16px;display:flex;flex-direction:column;gap:10px}
+.rf{display:flex;flex-direction:column;gap:4px}
+.rf label{font-size:.63rem;text-transform:uppercase;letter-spacing:.06em;
+          color:var(--muted);font-weight:700}
+.rf input{background:var(--surface);border:1.5px solid var(--border);border-radius:9px;
+          color:var(--text);font-size:.88rem;padding:9px 12px;font-family:monospace;
+          transition:border-color .15s}
+.rf input:focus{outline:none;border-color:var(--accent)}
+.rf input.filled{border-color:rgba(34,197,94,.5);background:rgba(34,197,94,.06)}
+.rf input.empty{border-color:rgba(239,68,68,.3);background:rgba(239,68,68,.04)}
+.res-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.conf-row{padding:10px 16px;border-top:1px solid var(--border);
+          display:flex;align-items:center;gap:8px;font-size:.72rem;color:var(--muted)}
+.conf-bar{flex:1;height:4px;background:var(--surface);border-radius:2px;overflow:hidden}
+.conf-fill{height:100%;border-radius:2px;transition:width .4s}
+.res-actions{padding:12px 16px;display:flex;gap:8px;border-top:1px solid var(--border)}
+.btn-confirm{flex:1;background:linear-gradient(135deg,var(--accent),var(--cyan));
+             color:#fff;padding:13px;border:none;border-radius:10px;
+             font-size:.85rem;font-weight:700;cursor:pointer;font-family:inherit}
+.btn-confirm:active{transform:scale(.97)}
+.btn-reset{background:var(--surface);color:var(--muted);padding:13px 16px;
+           border:1.5px solid var(--border);border-radius:10px;
+           font-size:.85rem;cursor:pointer;font-family:inherit}
+.log-sec{padding:0 18px}
+.log-box{background:var(--card);border-radius:11px;padding:10px 12px;
+         font-size:.68rem;color:var(--muted);font-family:monospace;
+         max-height:100px;overflow-y:auto;line-height:1.8}
+.l-ok{color:var(--ok)}.l-w{color:var(--warn)}.l-err{color:var(--danger)}
+.toast{position:fixed;bottom:24px;left:50%;
+       transform:translateX(-50%) translateY(80px);
+       background:var(--card);border:1px solid var(--border);
+       color:var(--text);padding:10px 20px;border-radius:24px;
+       font-size:.82rem;font-weight:600;white-space:nowrap;
+       transition:transform .3s cubic-bezier(.34,1.56,.64,1);
+       z-index:999;box-shadow:0 8px 32px rgba(0,0,0,.5)}
+.toast.show{transform:translateX(-50%) translateY(0)}
+.toast.success{border-color:rgba(34,197,94,.4);color:var(--ok)}
+.toast.error{border-color:rgba(239,68,68,.4);color:var(--danger)}
+.toast.warn{border-color:rgba(245,158,11,.4);color:var(--warn)}
+</style>
+</head>
+<body>
+
+<div class="hdr">
+  <div class="hdr-ico">📷</div>
+  <div>
+    <h1>Scanner SET — V2.6</h1>
+    <p>QR · Barcode · OCR <span class="ver">V2.6</span></p>
+  </div>
+</div>
+
+<div class="tabs">
+  <div class="tab active" id="tab-bc">📊 QR / Code-barres</div>
+  <div class="tab" id="tab-ocr">📄 OCR Étiquette</div>
+</div>
+
+<!-- PANE BARCODE -->
+<div id="pane-bc">
+  <div class="cam-wrap">
+    <div class="cam-ph" id="cam-ph">
+      <span style="font-size:3rem">📷</span>
+      <p>Appuyez sur <b style="color:var(--accent)">Scanner Équipement</b></p>
+    </div>
+    <video id="video" autoplay playsinline muted style="display:none"></video>
+    <div class="vf" id="vf" style="display:none">
+      <div class="vf-box">
+        <div class="vf-corner tl"></div><div class="vf-corner tr"></div>
+        <div class="vf-corner bl"></div><div class="vf-corner br"></div>
+        <div class="vf-laser"></div>
+      </div>
+    </div>
+    <div class="cam-hint" id="cam-hint" style="display:none">
+      Cadrez l'étiquette puis appuyez 📸 Capturer
+    </div>
+  </div>
+  <div class="cam-ctrl">
+    <button class="btn btn-blue"  id="btn-start">▶ Scanner Équipement</button>
+    <button class="btn btn-green" id="btn-cap"   style="display:none">📸 Capturer</button>
+    <button class="btn btn-gray"  id="btn-stop"  style="display:none">⏹ Arrêter</button>
+    <button class="btn btn-torch" id="btn-torch" style="display:none">🔦</button>
+  </div>
+  <div class="upload-zone">
+    <input type="file" accept="image/*" capture="environment" id="inp-img">
+    <div class="ico">🖼️</div>
+    <p><b>Photo d'une étiquette</b> avec code-barres<br>
+       <span style="font-size:.7rem;opacity:.7">Barcode + OCR analysés automatiquement</span></p>
+    <img id="img-prev" alt="">
+  </div>
+</div>
+
+<!-- PANE OCR -->
+<div id="pane-ocr" style="display:none">
+  <div class="upload-zone">
+    <input type="file" accept="image/*" capture="environment" id="inp-ocr">
+    <div class="ico">📸</div>
+    <p><b>Photographiez l'étiquette</b> du produit<br>
+       <span style="font-size:.7rem;opacity:.7">Model, S/N, code-barres visibles</span></p>
+    <img id="ocr-prev" alt="" style="width:100%;border-radius:10px;margin-top:10px;display:none">
+  </div>
+  <div class="prog-wrap" id="ocr-prog">
+    <div class="prog-top">
+      <span id="ocr-status">Initialisation...</span>
+      <span id="ocr-pct">0%</span>
+    </div>
+    <div class="prog-bar"><div class="prog-fill" id="ocr-fill"></div></div>
+  </div>
+  <div class="ocr-sec">
+    <div class="sec-lbl">Texte reconnu (éditable)</div>
+    <textarea id="ocr-txt" placeholder="Le texte OCR apparaîtra ici..."></textarea>
+    <button class="btn btn-blue" id="btn-extraire" style="width:100%;margin-top:8px">
+      🔍 Extraire les informations
+    </button>
+  </div>
+</div>
+
+<!-- RÉSULTAT -->
+<div class="res-card" id="res-card">
+  <div class="res-hdr">
+    <div class="dot-ok"></div>
+    <span>Informations extraites</span>
+    <span class="src-b" id="r-src">—</span>
+  </div>
+  <div class="res-fields">
+    <div class="res-grid">
+      <div class="rf"><label>N° de Série</label><input type="text" id="r-sn" placeholder="—"></div>
+      <div class="rf"><label>Type produit</label><input type="text" id="r-type" placeholder="—"></div>
+    </div>
+    <div class="res-grid">
+      <div class="rf"><label>Marque</label><input type="text" id="r-marque" placeholder="—"></div>
+      <div class="rf"><label>Taille</label><input type="text" id="r-taille" placeholder="—"></div>
+    </div>
+    <div class="rf"><label>Modèle</label><input type="text" id="r-modele" placeholder="—"></div>
+    <!-- EAN conservé en interne mais non affiché -->
+    <input type="hidden" id="r-raw">
+  </div>
+  <div class="conf-row">
+    <span>Confiance :</span>
+    <div class="conf-bar"><div class="conf-fill" id="conf-fill"></div></div>
+    <span id="conf-pct" style="font-weight:700;min-width:35px;text-align:right">0%</span>
+  </div>
+  <div class="res-actions">
+    <button class="btn-confirm" id="btn-confirm">✅ Utiliser ces informations</button>
+    <button class="btn-reset"   id="btn-reset">↺</button>
+  </div>
+</div>
+
+<div class="log-sec">
+  <div class="sec-lbl" style="padding-bottom:6px">Journal</div>
+  <div class="log-box" id="log"></div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<!-- Scripts en fin de body : chargés après le DOM, jamais de ReferenceError -->
+<script src="https://cdn.jsdelivr.net/npm/@zxing/library@0.21.1/umd/index.min.js"></script>
+<script>
+// ═══════════════════════════════════════════
+// SET 
+// ═══════════════════════════════════════════
+// SET Scanner V2.6 — tous les onclick remplacés
+// par addEventListener dans DOMContentLoaded
+// ═══════════════════════════════════════════
+
+// ── Utils ──────────────────────────────────
+var _toastT;
+function toast(msg, type) {
+    type = type || '';
+    var t = document.getElementById('toast');
+    t.textContent = msg;
+    t.className = 'toast ' + type + ' show';
+    clearTimeout(_toastT);
+    _toastT = setTimeout(function(){ t.classList.remove('show'); }, 3200);
+}
+function log(msg, cls) {
+    cls = cls || '';
+    var el = document.getElementById('log');
+    var d  = document.createElement('div');
+    if(cls) d.className = 'l-' + cls;
+    var h = new Date().toLocaleTimeString('fr-FR',{hour:'2-digit',minute:'2-digit',second:'2-digit'});
+    d.textContent = '[' + h + '] ' + msg;
+    el.appendChild(d);
+    el.scrollTop = el.scrollHeight;
+}
+
+// ── Tabs ───────────────────────────────────
+function switchTab(name) {
+    document.getElementById('tab-bc').classList.toggle('active', name === 'bc');
+    document.getElementById('tab-ocr').classList.toggle('active', name === 'ocr');
+    document.getElementById('pane-bc').style.display  = name === 'bc'  ? 'block' : 'none';
+    document.getElementById('pane-ocr').style.display = name === 'ocr' ? 'block' : 'none';
+    if(name === 'bc' && camActive) stopScan();
+}
+
+// ── Caméra ─────────────────────────────────
+var stream = null, camActive = false, torchOn = false, scanTimer = null;
+
+function startScan() {
+    if(!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+        toast('❌ Caméra non disponible sur ce navigateur', 'error');
+        log('getUserMedia non disponible', 'err');
+        return;
+    }
+    log('Demande caméra arrière...');
+    navigator.mediaDevices.getUserMedia({
+        video: { facingMode: { ideal: 'environment' }, width: { ideal: 1280 }, height: { ideal: 720 } }
+    }).then(function(s) {
+        stream = s;
+        var v = document.getElementById('video');
+        v.srcObject = stream;
+        v.style.display = 'block';
+        document.getElementById('cam-ph').style.display    = 'none';
+        document.getElementById('vf').style.display        = 'flex';
+        document.getElementById('cam-hint').style.display  = 'block';
+        document.getElementById('btn-start').style.display = 'none';
+        document.getElementById('btn-cap').style.display   = 'flex';
+        document.getElementById('btn-stop').style.display  = 'flex';
+        document.getElementById('btn-torch').style.display = 'flex';
+        camActive = true;
+        log('Caméra active — cadrez puis Capturer', 'ok');
+        toast('📷 Caméra active — cadrez puis Capturer', 'success');
+        // Détection auto si BarcodeDetector dispo
+        if('BarcodeDetector' in window) {
+            log('BarcodeDetector natif disponible', 'ok');
+            lancerDetectionAuto(v);
+        } else {
+            log('BarcodeDetector absent — utilisez Capturer', 'w');
+        }
+    }).catch(function(e) {
+        log('Erreur caméra : ' + e.message, 'err');
+        toast('❌ ' + e.message, 'error');
+    });
+}
+
+function lancerDetectionAuto(video) {
+    var formats = ['qr_code','ean_13','ean_8','code_128','code_39','upc_a','upc_e'];
+    var detector = new BarcodeDetector({ formats: formats });
+    scanTimer = setInterval(function() {
+        if(!camActive || video.readyState < 2) return;
+        detector.detect(video).then(function(codes) {
+            if(codes.length > 0) {
+                log('Auto-détecté : ' + codes[0].rawValue, 'ok');
+                clearInterval(scanTimer);
+                stopScan();
+                traiterCodeEtOCR(codes[0].rawValue, codes[0].format, null);
+            }
+        }).catch(function(){});
+    }, 400);
+}
+
+function stopScan() {
+    if(stream) { stream.getTracks().forEach(function(t){ t.stop(); }); stream = null; }
+    if(scanTimer) { clearInterval(scanTimer); scanTimer = null; }
+    var v = document.getElementById('video');
+    v.srcObject = null; v.style.display = 'none';
+    document.getElementById('cam-ph').style.display    = 'flex';
+    document.getElementById('vf').style.display        = 'none';
+    document.getElementById('cam-hint').style.display  = 'none';
+    document.getElementById('btn-start').style.display = 'flex';
+    document.getElementById('btn-cap').style.display   = 'none';
+    document.getElementById('btn-stop').style.display  = 'none';
+    document.getElementById('btn-torch').style.display = 'none';
+    camActive = false; torchOn = false;
+    log('Caméra arrêtée');
+}
+
+function toggleTorch() {
+    if(!stream) return;
+    var track = stream.getVideoTracks()[0];
+    var caps  = track.getCapabilities && track.getCapabilities();
+    if(!caps || !caps.torch) { toast('🔦 Torche non disponible', 'warn'); return; }
+    torchOn = !torchOn;
+    track.applyConstraints({ advanced: [{ torch: torchOn }] });
+    document.getElementById('btn-torch').classList.toggle('on', torchOn);
+    log('Torche : ' + (torchOn ? 'ON' : 'OFF'));
+}
+
+// ── Capturer frame depuis caméra ───────────
+function capturerFrame() {
+    var video = document.getElementById('video');
+    if(!video || !camActive) return;
+    // Flash visuel
+    video.style.opacity = '0.3';
+    setTimeout(function(){ video.style.opacity = '1'; }, 200);
+    var canvas = document.createElement('canvas');
+    canvas.width  = video.videoWidth  || 1280;
+    canvas.height = video.videoHeight || 720;
+    canvas.getContext('2d').drawImage(video, 0, 0);
+    log('📸 Frame capturée — analyse barcode + OCR...', 'ok');
+    toast('📸 Frame capturée — analyse en cours...', '');
+    stopScan();
+    canvas.toBlob(function(blob) {
+        var url = URL.createObjectURL(blob);
+        var prev = document.getElementById('img-prev');
+        prev.src = url; prev.style.display = 'block';
+        analyserURL(url, function() { URL.revokeObjectURL(url); });
+    }, 'image/jpeg', 0.92);
+}
+
+// ── Upload image ───────────────────────────
+function onImageChange(event) {
+    var file = event.target.files[0]; if(!file) return;
+    var url = URL.createObjectURL(file);
+    var prev = document.getElementById('img-prev');
+    prev.src = url; prev.style.display = 'block';
+    log('Photo : ' + file.name);
+    toast('📸 Photo reçue — détection barcode + OCR...', 'success');
+    document.getElementById('ocr-prog').style.display = 'block';
+    document.getElementById('ocr-status').textContent = '🔍 Détection barcode...';
+    document.getElementById('ocr-fill').style.width   = '2%';
+    document.getElementById('ocr-pct').textContent    = '...';
+    analyserURL(url, function() { URL.revokeObjectURL(url); });
+}
+
+// ── Analyser une URL image (barcode + OCR) ─
+function analyserURL(url, callback) {
+    var ean = null;
+    toast('🔍 Analyse barcode...', '');
+
+    function apresBarcode() {
+        lancerOCR(url, ean, callback);
+    }
+
+    // 1. BarcodeDetector
+    if('BarcodeDetector' in window) {
+        var img = new Image(); img.src = url;
+        img.onload = function() {
+            var det = new BarcodeDetector({
+                formats: ['qr_code','ean_13','ean_8','code_128','code_39','upc_a','upc_e']
+            });
+            det.detect(img).then(function(codes) {
+                if(codes.length > 0) {
+                    ean = codes[0].rawValue;
+                    log('Barcode : ' + ean + ' [' + codes[0].format + ']', 'ok');
+                    if(codes[0].format === 'qr_code') {
+                        var infos = parserQR(ean);
+                        afficher(infos, 'QR Code');
+                        if(callback) callback();
+                        return;
+                    }
+                }
+                apresBarcode();
+            }).catch(function() { apresBarcode(); });
+        };
+        img.onerror = function() { apresBarcode(); };
+    } else {
+        // ZXing fallback
+        try {
+            var rd = new ZXing.BrowserMultiFormatReader();
+            rd.decodeFromImageUrl(url).then(function(result) {
+                if(result) { ean = result.text; log('ZXing : ' + ean, 'ok'); }
+                apresBarcode();
+            }).catch(function() { apresBarcode(); });
+        } catch(e) { apresBarcode(); }
+    }
+}
+
+// ── OCR avec lazy load Tesseract ───────────
+var _tessOK = false;
+function loadTesseract(cb) {
+    if(_tessOK && window.Tesseract) { cb(); return; }
+    // Feedback immédiat
+    document.getElementById('ocr-prog').style.display = 'block';
+    document.getElementById('ocr-status').textContent = '⏳ Chargement moteur OCR (10-20s)...';
+    document.getElementById('ocr-fill').style.width   = '5%';
+    document.getElementById('ocr-pct').textContent    = '...';
+    toast('⏳ Chargement moteur OCR...', '');
+    log('Chargement Tesseract (première utilisation)...');
+    var s = document.createElement('script');
+    s.src = 'https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js';
+    s.onload  = function() {
+        _tessOK = true;
+        document.getElementById('ocr-status').textContent = '✅ Moteur OCR prêt — analyse...';
+        document.getElementById('ocr-fill').style.width   = '10%';
+        log('Tesseract chargé', 'ok');
+        cb();
+    };
+    s.onerror = function() { log('Erreur chargement Tesseract', 'err'); cb(); };
+    document.head.appendChild(s);
+}
+
+function lancerOCR(url, ean, callback) {
+    document.getElementById('ocr-prog').style.display = 'block';
+    log('OCR démarré...');
+    toast('📄 Analyse OCR en cours... (peut prendre 15-30s)', '');
+
+    loadTesseract(function() {
+        if(!window.Tesseract) {
+            log('Tesseract non disponible', 'err');
+            if(ean) { var i = {}; i.sn = ean; i.raw = ean; i.marque=''; i.modele=''; i.type=''; i.taille=''; afficher(i, 'EAN'); }
+            if(callback) callback();
+            return;
+        }
+        Tesseract.recognize(url, 'fra+eng', {
+            logger: function(m) {
+                if(m.status === 'recognizing text') {
+                    var p = Math.round(m.progress * 100);
+                    document.getElementById('ocr-fill').style.width = p + '%';
+                    document.getElementById('ocr-pct').textContent  = p + '%';
+                    document.getElementById('ocr-status').textContent = 'OCR... ' + p + '%';
+                }
+            }
+        }).then(function(result) {
+            var texte = result.data.text.trim();
+            document.getElementById('ocr-txt').value = texte;
+            document.getElementById('ocr-fill').style.width      = '100%';
+            document.getElementById('ocr-fill').style.background = 'var(--ok)';
+            document.getElementById('ocr-status').textContent    = '✅ OCR terminé';
+            document.getElementById('ocr-pct').textContent       = '100%';
+            log('OCR terminé — ' + texte.length + ' caractères', 'ok');
+        log('OCR brut : ' + texte.replace(/\n/g,' ').substring(0,200), '');
+            var infos = parserTexte(texte);
+            if(ean) {
+                if(!infos.sn) infos.sn = ean;
+                infos.raw = ean + (infos.raw ? ' | ' + infos.raw : '');
+            }
+            afficher(infos, ean ? 'Barcode+OCR' : 'OCR');
+            if(callback) callback();
+        }).catch(function(e) {
+            log('OCR erreur : ' + e.message, 'err');
+            if(ean) { var i = {sn:ean,raw:ean,marque:'',modele:'',type:'',taille:''}; afficher(i,'EAN'); }
+            else toast('❌ OCR échoué', 'error');
+            if(callback) callback();
+        });
+    });
+}
+
+// OCR onglet dédié
+function onOCRChange(event) {
+    var file = event.target.files[0]; if(!file) return;
+    var url = URL.createObjectURL(file);
+    var prev = document.getElementById('ocr-prev');
+    prev.src = url; prev.style.display = 'block';
+    log('Photo chargée : ' + file.name);
+    toast('📸 Photo reçue — lancement OCR...', 'success');
+    lancerOCR(url, null, function() { URL.revokeObjectURL(url); });
+}
+
+function extraireTexte() {
+    var texte = document.getElementById('ocr-txt').value;
+    if(!texte.trim()) { toast('⚠️ Aucun texte', 'warn'); return; }
+    var infos = parserTexte(texte);
+    afficher(infos, 'OCR texte');
+}
+
+// ── Parseur QR ─────────────────────────────
+function parserQR(val) {
+    var i = { sn:'', marque:'', modele:'', type:'', taille:'', raw:val };
+    try {
+        var o = JSON.parse(val);
+        i.sn = o.sn || o.serial || o.serialNumber || o.SN || '';
+        i.marque = o.brand || o.manufacturer || o.marque || '';
+        i.modele = o.model || o.modele || '';
+        i.type   = o.type  || '';
+        return i;
+    } catch(e) {}
+    var sn = val.match(/(?:S\/N|SN|Serial)[:\s#=]+([A-Z0-9\-]{4,30})/i);
+    if(sn) i.sn = sn[1];
+    return i;
+}
+
+// ── Parseur texte OCR ──────────────────────
+function parserTexte(texte) {
+    var i = { sn:'', marque:'', modele:'', type:'', taille:'', raw:'' };
+
+    // S/N — patterns très tolérants aux erreurs OCR
+    var snTests = [
+        texte.match(/S\s*[\/\\|I1]\s*N\s*[:.\s\-]+([A-Z0-9]{6,25})/i),
+        texte.match(/SN\s*[:.\s]+([A-Z0-9]{6,25})/i),
+        texte.match(/\$\s*\/\s*N\s*[:\s]+([A-Z0-9]{6,25})/i),
+        texte.match(/Serial\s*(?:Number|No|Nr)?\s*[:\s]+([A-Z0-9\-]{6,25})/i),
+        texte.match(/IMEI\s*[:\s]+(\d{15})/i),
+        // Pattern S/N Samsung typique : lettre+chiffre+lettres+chiffres (ex: 0G5K3SBY702759)
+        texte.match(/\b([0-9][A-Z][0-9A-Z]{12,20})\b/),
+    ];
+    for(var si = 0; si < snTests.length; si++) {
+        if(snTests[si] && snTests[si][1] && !/^\d{13}$/.test(snTests[si][1])) {
+            i.sn = snTests[si][1].trim(); break;
+        }
+    }
+
+    // Modèle — chercher sur chaque ligne, prendre le plus court match Samsung
+    var modelTests = [];
+    // Pattern Model: ligne après le mot Model
+    var mModel = texte.match(/[Mm][ao][d][eé]l[e]?\s*[:\n\s]+([A-Z0-9][A-Z0-9\-]{4,18})/);
+    if(mModel) modelTests.push(mModel);
+    // Samsung : QE/QN/UN/UA + 2 chiffres + 4-9 chars, suivi d'un non-alphanum ou fin de ligne
+    var reSam = /((QE|QN|UN|UA)\d{2}[A-Z0-9]{4,9})(?=[^A-Z0-9]|\n|$)/gm;
+    var mSam, samMatches = [];
+    while((mSam = reSam.exec(texte)) !== null) samMatches.push(mSam[1]);
+    // Trier par longueur croissante (le modèle est plus court que le Model Code)
+    samMatches.sort(function(a,b){ return a.length - b.length; });
+    if(samMatches.length > 0) modelTests.push([null, samMatches[0]]);
+    // Sony
+    var mKD = texte.match(/(KD-?\d{2}[A-Z0-9]{4,10})/);
+    if(mKD) modelTests.push(mKD);
+    // Générique
+    var mGen = texte.match(/([A-Z]{2}\d{2}[A-Z][A-Z0-9\-]{3,12})/);
+    if(mGen) modelTests.push(mGen);
+    var blacklist = ['MADE','CHINA','KOREA','SLOVAKIA','SERIAL','MODEL','CODE'];
+    for(var mi = 0; mi < modelTests.length; mi++) {
+        if(modelTests[mi] && modelTests[mi][1] && modelTests[mi][1].length > 4) {
+            var cand = modelTests[mi][1].trim().toUpperCase();
+            var bad = false;
+            for(var bi = 0; bi < blacklist.length; bi++) {
+                if(cand.indexOf(blacklist[bi]) !== -1) { bad = true; break; }
+            }
+            if(!bad) { i.modele = modelTests[mi][1].trim(); break; }
+        }
+    }
+
+    // Marque — vérification directe indexOf (pas de regex \b)
+    var TU = texte.toUpperCase();
+    var MU = i.modele.toUpperCase();
+    if(TU.indexOf('SAMSUNG') !== -1)                                    i.marque = 'Samsung';
+    else if(MU.indexOf('QE') === 0 || MU.indexOf('QN') === 0 ||
+            MU.indexOf('UN') === 0 || MU.indexOf('UA') === 0)           i.marque = 'Samsung';
+    else if(TU.indexOf('APPLE')  !== -1 || TU.indexOf('IPHONE') !== -1 ||
+            TU.indexOf('IPAD')   !== -1 || TU.indexOf('MACBOOK') !== -1) i.marque = 'Apple';
+    else if(TU.indexOf('SONY')   !== -1 || MU.indexOf('KD') === 0)      i.marque = 'Sony';
+    else if(TU.indexOf(' LG ')   !== -1 || TU.indexOf('\nLG') !== -1)   i.marque = 'LG';
+    else if(TU.indexOf('PHILIPS')  !== -1) i.marque = 'Philips';
+    else if(TU.indexOf('HISENSE')  !== -1) i.marque = 'Hisense';
+    else if(TU.indexOf('TCL')      !== -1) i.marque = 'TCL';
+    else if(TU.indexOf('PANASONIC')!== -1) i.marque = 'Panasonic';
+    else if(TU.indexOf('LASERJET') !== -1 || TU.indexOf(' HP ') !== -1) i.marque = 'HP';
+    else if(TU.indexOf('DELL')     !== -1) i.marque = 'Dell';
+    else if(TU.indexOf('LENOVO')   !== -1) i.marque = 'Lenovo';
+    else if(TU.indexOf('ASUS')     !== -1) i.marque = 'Asus';
+    else if(TU.indexOf('ACER')     !== -1) i.marque = 'Acer';
+    else if(TU.indexOf('CANON')    !== -1) i.marque = 'Canon';
+    else if(TU.indexOf('EPSON')    !== -1) i.marque = 'Epson';
+    else if(TU.indexOf('BROTHER')  !== -1) i.marque = 'Brother';
+    else if(TU.indexOf('XIAOMI')   !== -1) i.marque = 'Xiaomi';
+    else if(TU.indexOf('HUAWEI')   !== -1) i.marque = 'Huawei';
+
+    // Type
+    if     (i.modele.match(/^(QE|QN|UN|KD|UA)/i))                       i.type = 'TV';
+    else if(TU.indexOf('OLED') !== -1 || TU.indexOf('QLED') !== -1 ||
+            TU.indexOf(' LED') !== -1 || TU.indexOf('TELEVISION') !== -1) i.type = 'TV';
+    else if(TU.indexOf('LAPTOP')  !== -1 || TU.indexOf('NOTEBOOK') !== -1 ||
+            TU.indexOf('MACBOOK') !== -1)                                  i.type = 'PC';
+    else if(TU.indexOf('PRINTER') !== -1 || TU.indexOf('IMPRIMANTE') !== -1 ||
+            TU.indexOf('LASERJET')!== -1)                                  i.type = 'Imprimante';
+    else if(TU.indexOf('IPHONE')  !== -1 || TU.indexOf('SMARTPHONE') !== -1) i.type = 'Telephone';
+    else if(TU.indexOf('IPAD')    !== -1 || TU.indexOf('TABLETTE') !== -1)   i.type = 'Tablette';
+
+    // Taille depuis modèle (QE55 → 55")
+    if(i.modele) {
+        var tm = i.modele.match(/^(?:QE|KD|UN|OLED|QN|UA)?(\d{2})/i);
+        if(tm && parseInt(tm[1]) >= 24 && parseInt(tm[1]) <= 98) i.taille = tm[1] + '"';
+    }
+    if(!i.taille) {
+        var tm2 = texte.match(/(\d{2})\s*(?:pouces|inch|")/i);
+        if(tm2 && parseInt(tm2[1]) >= 24) i.taille = tm2[1] + '"';
+    }
+
+    // EAN ou texte brut
+    var eanM = texte.replace(/\s/g,'').match(/(\d{13})/);
+    if(eanM) i.raw = eanM[1];
+    else {
+        var lignes = texte.split('\n').filter(function(l){ return l.trim().length > 3; });
+        i.raw = lignes.slice(0,2).join(' — ').substring(0,60);
+    }
+    return i;
+}
+
+// EAN : traitement direct (sans OCR si QR)
+function traiterCodeEtOCR(code, format, url) {
+    log('Code : ' + code + ' [' + format + ']');
+    if(url) {
+        lancerOCR(url, code, null);
+    } else {
+        // Juste afficher le code, conseiller OCR
+        var i = { sn:code, marque:'', modele:'', type:'', taille:'', raw:code };
+        afficher(i, String(format));
+        toast('📄 Utilisez OCR Étiquette pour Marque/Modèle', 'warn');
+    }
+}
+
+// ── Affichage résultat ─────────────────────
+function calculerConfiance(i) {
+    var s = 0;
+    if(i.sn     && i.sn.length > 5)     s += 35;
+    if(i.marque && i.marque.length > 1)  s += 25;
+    if(i.modele && i.modele.length > 3)  s += 25;
+    if(i.type   && i.type.length > 1)    s += 10;
+    if(i.taille && i.taille.length > 1)  s += 5;
+    return Math.min(s, 100);
+}
+
+function setF(id, val) {
+    var el = document.getElementById(id);
+    if(!el) return;
+    el.value = val || '';
+    el.classList.remove('filled','empty');
+    el.classList.add(val ? 'filled' : 'empty');
+}
+
+function afficher(infos, src) {
+    document.getElementById('res-card').classList.add('show');
+    document.getElementById('r-src').textContent = src || '—';
+    // Si pas de S/N trouvé, utiliser l'EAN comme fallback
+    if(!infos.sn && infos.raw) infos.sn = infos.raw;
+    setF('r-sn',     infos.sn);
+    setF('r-marque', infos.marque);
+    setF('r-modele', infos.modele);
+    setF('r-type',   infos.type);
+    setF('r-taille', infos.taille || '');
+    setF('r-raw',    infos.raw);
+    var conf = calculerConfiance(infos);
+    var fill = document.getElementById('conf-fill');
+    fill.style.width      = conf + '%';
+    fill.style.background = conf >= 70 ? 'var(--ok)' : conf >= 40 ? 'var(--warn)' : 'var(--danger)';
+    document.getElementById('conf-pct').textContent = conf + '%';
+    document.getElementById('conf-pct').style.color =
+        conf >= 70 ? 'var(--ok)' : conf >= 40 ? 'var(--warn)' : 'var(--danger)';
+    document.getElementById('res-card').scrollIntoView({ behavior:'smooth', block:'nearest' });
+    log('SN:' + infos.sn + ' Marque:' + infos.marque + ' Modele:' + infos.modele +
+        ' Type:' + infos.type + ' Taille:' + infos.taille + ' [' + conf + '%]',
+        conf >= 70 ? 'ok' : conf >= 40 ? 'w' : 'err');
+    toast('✅ ' + conf + '% de confiance', conf >= 70 ? 'success' : conf >= 40 ? 'warn' : 'error');
+    window._scanResult = infos;
+}
+
+function confirmer() {
+    if(!window._scanResult) return;
+    window._scanResult.sn     = document.getElementById('r-sn').value;
+    window._scanResult.marque = document.getElementById('r-marque').value;
+    window._scanResult.modele = document.getElementById('r-modele').value;
+    window._scanResult.type   = document.getElementById('r-type').value;
+    window._scanResult.taille = document.getElementById('r-taille').value;
+    log('CONFIRMÉ : ' + JSON.stringify(window._scanResult), 'ok');
+    toast('✅ Prêt à remplir le formulaire SET !', 'success');
+    console.log('SET_SCAN_RESULT:', window._scanResult);
+}
+
+function resetRes() {
+    document.getElementById('res-card').classList.remove('show');
+    ['r-sn','r-marque','r-modele','r-type','r-taille','r-raw'].forEach(function(id){
+        var el = document.getElementById(id);
+        if(el){ el.value=''; el.classList.remove('filled','empty'); }
+    });
+    document.getElementById('ocr-txt').value = '';
+    document.getElementById('ocr-prog').style.display = 'none';
+    ['ocr-prev','img-prev'].forEach(function(id){
+        var el = document.getElementById(id);
+        if(el){ el.style.display='none'; el.src=''; }
+    });
+    window._scanResult = null;
+    log('Reset');
+}
+
+// ── Branchement événements après DOM chargé ─
+document.addEventListener('DOMContentLoaded', function() {
+    // Tabs
+    document.getElementById('tab-bc').addEventListener('click',  function(){ switchTab('bc'); });
+    document.getElementById('tab-ocr').addEventListener('click', function(){ switchTab('ocr'); });
+    // Caméra
+    document.getElementById('btn-start').addEventListener('click', startScan);
+    document.getElementById('btn-cap').addEventListener('click',   capturerFrame);
+    document.getElementById('btn-stop').addEventListener('click',  stopScan);
+    document.getElementById('btn-torch').addEventListener('click', toggleTorch);
+    // Upload barcode
+    document.getElementById('inp-img').addEventListener('change', onImageChange);
+    // Upload OCR
+    document.getElementById('inp-ocr').addEventListener('change', onOCRChange);
+    // Extraire texte
+    document.getElementById('btn-extraire').addEventListener('click', extraireTexte);
+    // Résultat
+    document.getElementById('btn-confirm').addEventListener('click', confirmer);
+    document.getElementById('btn-reset').addEventListener('click',   resetRes);
+
+    log('Scanner V2.6 prêt — BarcodeDetector : ' +
+        ('BarcodeDetector' in window ? '✅ natif' : '⚠️ ZXing fallback'), 'ok');
+});
